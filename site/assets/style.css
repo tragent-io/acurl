@@ -32,7 +32,7 @@
 html { scroll-padding-top: 84px; }
 body { margin: 0; background: var(--canvas); color: var(--ink); font: 16px/1.6 var(--sans); -webkit-font-smoothing: antialiased; }
 a { color: var(--brand); text-underline-offset: 3px; text-decoration-thickness: 1px; }
-code, pre, kbd { font-family: var(--mono); font-variant-ligatures: none; }
+code, pre, kbd { font-family: var(--mono); font-variant-ligatures: none; font-feature-settings: "calt" 0, "liga" 0; }
 :focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; border-radius: 2px; }
 .wrap { max-width: var(--wrap); margin: 0 auto; padding: 0 28px; }
 .skip { position: absolute; left: -999px; }
@@ -90,10 +90,6 @@ code, pre, kbd { font-family: var(--mono); font-variant-ligatures: none; }
 .term .p { color: #b48cf0; } .term .d { color: var(--term-dim); } .term .h { color: #fdfcff; font-weight: 500; }
 .term .ok { color: #6fdba4; } .term .bad { color: #f39a9c; } .term .warn { color: #f5c26b; } .term .cl { color: #c9a8f5; } .term .info { color: #8fbff5; }
 .term .row { display: block; }
-@media (prefers-reduced-motion: no-preference) {
-  .term.play .row { opacity: 0; animation: in .28s ease-out forwards; animation-delay: calc(var(--i) * 70ms + 300ms); }
-  @keyframes in { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; transform: none; } }
-}
 
 /* sections */
 .section { padding: 80px 0; border-bottom: 1px solid var(--line); }
@@ -196,19 +192,40 @@ footer.site nav a:hover { color: var(--brand); }
 .section h2 + .verdicts, .section h2 + .code, .section h2 + .cmds { margin-top: 24px; }
 .more { margin: 18px 0 0; font-size: 15px; }
 
-/* Landing page: one centered column. */
-.home .hero { text-align: center; padding: 96px 0 64px; }
-.home .hero h1 { margin: 0 auto 18px; max-width: 820px; text-wrap: balance; }
-.home .hero .sub { margin: 0 auto 32px; text-wrap: balance; }
-.home .install { margin: 0 auto; text-align: left; }
-.home .install .tabs { justify-content: center; }
-.home .hero .ctas { justify-content: center; }
-.home .demo { padding-top: 64px; }
-.home .window { max-width: 1000px; margin: 0 auto; }
-.home .wrap.narrow > * { margin-left: auto; margin-right: auto; }
-.home .section h2 { text-align: center; }
-.home .section .more { text-align: center; }
-.home .section { padding: 72px 0; }
+/* Landing page: a man-page grid. Section names sit in a left gutter that
+   lines up with the logo; content fills one column to the right. */
+.home main { background: var(--panel); }
+.home .part { border-bottom: 1px solid var(--line-2); padding: 40px 0; }
+.home .part:last-child { border-bottom: 0; padding-bottom: 72px; }
+.home .grid { display: grid; grid-template-columns: 200px minmax(0, 1fr); column-gap: 48px; align-items: start; }
+.home .grid > h2 { margin: 0; padding-top: 2px; font: 500 15px/1.5 var(--sans); letter-spacing: -0.01em; color: var(--ink); position: sticky; top: 88px; }
+.home .body { min-width: 0; }
+.home .body > * + * { margin-top: 16px; }
+.home .body > :first-child { margin-top: 0; }
+
+.home .hero { padding: 64px 0 56px; background: var(--canvas); border-bottom: 1px solid var(--line); }
+.home .hero h1 { margin: 0; font: 600 44px/1 var(--mono); letter-spacing: -0.04em; color: var(--ink); }
+.home .hero .tagline { margin: 0; font: 500 32px/1.15 var(--sans); letter-spacing: -0.035em; color: var(--ink); }
+.home .hero .sub { max-width: 64ch; margin-top: 14px; font-size: 17px; color: var(--gray); }
+.home .verdicts code { white-space: nowrap; }
+.home .hero .sub code, .home .note code { white-space: nowrap; font-size: 0.86em; background: var(--surface); padding: 1px 5px; border-radius: var(--radius-chip); color: var(--ink); }
+.home .hero .install { max-width: none; margin-top: 28px; }
+.home .hero .meta { margin-top: 14px; font-size: 14px; color: var(--gray-2); }
+.home .hero .links { display: flex; flex-wrap: wrap; gap: 8px 24px; margin-top: 6px; font-size: 15px; font-weight: 500; }
+
+.home .synopsis { margin: 0; padding: 0; background: none; border: 0; font: 14px/1.9 var(--mono); color: var(--gray); overflow-x: auto; }
+.home .synopsis b { color: var(--ink); font-weight: 600; }
+.home .term { border-radius: 10px; background: var(--term); padding: 20px 24px; font-size: 13px; line-height: 1.6; }
+.home .note { margin-top: 14px; font-size: 14px; color: var(--gray-2); max-width: 72ch; }
+.home .verdicts { background: none; border: 0; border-radius: 0; box-shadow: none; }
+.home .verdicts td { padding: 11px 16px 11px 0; font-size: 15px; color: var(--gray); }
+.home .verdicts tr:first-child td { padding-top: 0; }
+.home .verdicts td:first-child { width: 200px; }
+.home .verdicts.codes td:first-child { width: 64px; }
+.home .verdicts.codes td:first-child code { font-size: 14px; background: none; padding: 0; color: var(--ink); }
+.home .code { border-radius: 10px; box-shadow: none; }
+.home .cmds td { padding: 11px 0; }
+.home .cmds tr:first-child td { padding-top: 0; }
 
 /* Never let long commands widen the page on small screens. */
 .install { width: 100%; }
@@ -216,7 +233,6 @@ footer.site nav a:hover { color: var(--brand); }
 .window, .code, .verdicts, .cmds { max-width: 100%; }
 @media (max-width: 560px) {
   .nav .right .by { display: none; }
-  .home .hero { padding: 56px 0 40px; }
   .install .tabs { justify-content: flex-start; }
   .verdicts td:first-child { width: auto; }
   .cmds td:first-child { width: 45%; }
@@ -246,7 +262,6 @@ footer.site nav a:hover { color: var(--brand); }
   .content h2 { font-size: 22px; margin-top: 48px; padding-top: 24px; }
   .content pre { font-size: 12px; }
   .verdicts td:first-child { width: auto; }
-  .home .section h2 { font-size: 28px; }
 }
 @media (max-width: 560px) {
   .cmdline { font-size: 13px; gap: 8px; padding: 12px; }
@@ -289,3 +304,24 @@ footer.site nav a:hover { color: var(--brand); }
 .nf-term { display: inline-block; text-align: left; margin: 0 auto; background: var(--term); color: var(--term-text); border-radius: 12px; padding: 16px 22px; font: 14px/1.7 var(--mono); max-width: 100%; white-space: pre-wrap; overflow-wrap: anywhere; }
 .nf-term .p { color: #b48cf0; }
 .nf-term .nf-bad { color: #f39a9c; }
+
+/* Landing grid on tablets and phones: the section name sits above its content. */
+@media (max-width: 820px) {
+  .home .grid { grid-template-columns: 1fr; row-gap: 14px; }
+  .home .grid > h2 { position: static; color: var(--gray-2); }
+  .home .hero { padding: 40px 0 36px; }
+  .home .hero h1 { font-size: 34px; }
+  .home .hero .tagline { font-size: 24px; }
+  .home .part { padding: 32px 0; }
+  .home .verdicts td:first-child { width: auto; }
+  .home .term { font-size: 12px; padding: 16px; }
+}
+
+/* The font shorthand on code blocks resets ligatures; keep != and >= literal. */
+.code pre, .term, .synopsis, .content pre { font-variant-ligatures: none; font-feature-settings: "calt" 0, "liga" 0; }
+
+/* Docs tables scroll as blocks; keep their rows full width so header shading spans the table. */
+.table-wrap table { display: table; }
+@media (min-width: 561px) {
+  .content table:not(.flags) > tbody { display: table; width: 100%; }
+}

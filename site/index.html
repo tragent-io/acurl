@@ -3,37 +3,36 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>acurl: see your website the way AI agents see it</title>
-<meta name="description" content="acurl is a free, open-source CLI that fetches a page as Chrome and 21 AI agents and crawlers, including ChatGPT, Claude and Perplexity, and shows which were blocked, challenged, cloaked or shown a different price.">
+<title>acurl: curl for AI agents</title>
+<meta name="description" content="acurl is an open-source CLI that sends one HTTP request as Chrome and 21 AI agent and crawler profiles (ChatGPT-User, Claude-User, GPTBot, PerplexityBot and more) and compares the responses: status, WAF challenges, robots.txt, cloaking and product data.">
 <meta name="theme-color" content="#fdfcff">
 <link rel="canonical" href="https://acurl.dev/">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
-<meta property="og:title" content="acurl: see your website the way AI agents see it">
-<meta property="og:description" content="Free, open-source CLI that checks how ChatGPT, Claude, Perplexity and other AI agents are treated by your site.">
+<meta property="og:title" content="acurl: curl for AI agents">
+<meta property="og:description" content="Open-source CLI that requests a URL as Chrome and 21 AI agent and crawler profiles and diffs the responses. Table, JSON, SARIF and JUnit output.">
 <meta property="og:url" content="https://acurl.dev/">
 <meta property="og:type" content="website">
 <meta property="og:image" content="https://acurl.dev/assets/og.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="acurl: see your site the way AI agents see it">
+<meta property="og:image:alt" content="acurl: curl for AI agents">
 <meta property="og:site_name" content="acurl">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://acurl.dev/assets/og.png">
-<meta name="twitter:title" content="acurl: see your website the way AI agents see it">
-<meta name="twitter:description" content="Free, open-source CLI that checks how ChatGPT, Claude, Perplexity and other AI agents are treated by your site.">
+<meta name="twitter:title" content="acurl: curl for AI agents">
+<meta name="twitter:description" content="Open-source CLI that requests a URL as Chrome and 21 AI agent and crawler profiles and diffs the responses. Table, JSON, SARIF and JUnit output.">
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
   "@type": "SoftwareApplication",
   "name": "acurl",
-  "description": "acurl is a free, open-source CLI that fetches a page as Chrome and 21 AI agents and crawlers, including ChatGPT, Claude and Perplexity, and shows which were blocked, challenged, cloaked or shown a different price.",
+  "description": "acurl is an open-source CLI that sends one HTTP request as Chrome and 21 AI agent and crawler profiles and compares the responses: status, WAF challenges, robots.txt, cloaking and product data.",
   "url": "https://acurl.dev/",
   "applicationCategory": "DeveloperApplication",
   "operatingSystem": "macOS, Linux, Windows",
   "license": "https://www.apache.org/licenses/LICENSE-2.0",
   "isAccessibleForFree": true,
-  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
-  "softwareVersion": "1.1.0",
+  "softwareVersion": "1.1.1",
   "downloadUrl": "https://github.com/tragent-io/acurl/releases",
   "codeRepository": "https://github.com/tragent-io/acurl",
   "author": { "@type": "Organization", "name": "tragent", "url": "https://tragent.io" }
@@ -58,7 +57,7 @@
       <a href="https://github.com/tragent-io/acurl/blob/main/CHANGELOG.md">Changelog</a>
     </nav>
     <div class="right">
-      <a class="by" href="https://tragent.io">by <b>tragent<span>.</span></b></a>
+      <a class="by" href="https://github.com/tragent-io/acurl/releases">Releases</a>
       <a class="btn btn-line" href="https://github.com/tragent-io/acurl">GitHub</a>
       <button class="menu-btn" type="button" aria-expanded="false" aria-controls="mobile-nav">Menu</button>
     </div>
@@ -75,11 +74,12 @@
 </header>
 
 <main id="main">
-<section class="hero">
-  <div class="wrap">
-    <h1>See your site the way AI agents see it.</h1>
-    <p class="sub">Check how 21 AI agents and crawlers, from ChatGPT and Claude to Perplexity, treat any URL.</p>
-
+<section class="part hero" aria-labelledby="name">
+  <div class="wrap grid">
+    <h1 id="name">acurl</h1>
+    <div class="body">
+      <p class="tagline">curl for AI agents.</p>
+      <p class="sub">Send one HTTP request as Chrome and as 21 AI agent and crawler profiles, then compare the responses: status, WAF challenge, robots.txt rule, visible-text similarity and product data. Output as a table, JSON, SARIF or JUnit, with a non-zero exit code when a <code>--fail-on</code> rule matches.</p>
     <div class="install" data-copy-scope>
       <div class="tabs" role="tablist" aria-label="Install acurl">
         <button role="tab" id="t-brew" aria-controls="p-brew" aria-selected="true">Homebrew</button>
@@ -93,52 +93,84 @@
         <code role="tabpanel" id="p-brew" aria-labelledby="t-brew">brew install tragent-io/tap/acurl</code>
         <code role="tabpanel" id="p-sh" aria-labelledby="t-sh" hidden>curl -fsSL https://acurl.dev/install.sh | sh</code>
         <code role="tabpanel" id="p-go" aria-labelledby="t-go" hidden>go install github.com/tragent-io/acurl/cmd/acurl@latest</code>
-        <code role="tabpanel" id="p-npm" aria-labelledby="t-npm" hidden>npx @tragent/acurl https://yourstore.com</code>
-        <code role="tabpanel" id="p-docker" aria-labelledby="t-docker" hidden>docker run --rm ghcr.io/tragent-io/acurl https://yourstore.com</code>
+        <code role="tabpanel" id="p-npm" aria-labelledby="t-npm" hidden>npx @tragent/acurl https://example.com</code>
+        <code role="tabpanel" id="p-docker" aria-labelledby="t-docker" hidden>docker run --rm ghcr.io/tragent-io/acurl https://example.com</code>
         <button class="copy" type="button" data-copy="[role=tabpanel]">Copy</button>
       </div>
     </div>
-    <div class="ctas">
-      <a class="btn btn-brand" href="docs/#quick-start">Get started</a>
-      <a class="btn btn-line" href="docs/#reference">Commands</a>
+      <p class="meta">A single static binary for macOS, Linux and Windows on amd64 and arm64. Apache&#8209;2.0.</p>
+      <p class="links"><a href="docs/#quick-start">Read the docs</a><a href="docs/#reference">Command reference</a><a href="https://github.com/tragent-io/acurl">Source on GitHub</a></p>
     </div>
   </div>
 </section>
-
-<section class="demo" aria-label="Example run">
-  <div class="wrap">
-    <div class="window">
-      <div class="bar" aria-hidden="true"><i></i><i></i><i></i><span>acurl shop.example/products/wool-runner</span></div>
-<pre class="term"><span class="row"><span class="p">$</span> acurl shop.example/products/wool-runner</span><span class="row d">Fetching https://shop.example/products/wool-runner with 23 profiles...</span><span class="row"> </span><span class="row h">PROFILE            STATUS  TIME    RESULT             DETAILS</span><span class="row">Chrome (Browser)   200     412ms   <span class="ok">allowed</span>            Wool Runner | Example Store</span><span class="row">ChatGPT-User       403     51ms    <span class="warn">challenged</span>         challenge: Cloudflare</span><span class="row">Claude-User        200     388ms   <span class="ok">allowed</span>            OK</span><span class="row">Perplexity-User    200     402ms   <span class="ok">allowed</span>            product: price 89.00 vs browser 98.00</span><span class="row">OAI-SearchBot      200     97ms    <span class="cl">cloaked</span>            31% similar to browser</span><span class="row">PerplexityBot      200     371ms   <span class="ok">allowed</span>            OK</span><span class="row">GPTBot             200     365ms   <span class="info">robots-disallowed</span>  robots.txt: disallowed</span><span class="row">Google-Extended    -       -       <span class="info">robots-disallowed</span>  robots.txt token (not fetched)</span><span class="row">Googlebot          200     390ms   <span class="ok">allowed</span>            OK</span><span class="row"> </span><span class="row h">AI readiness <span class="warn">71/100 (C)</span></span><span class="row">  <span class="bad">✗</span> AI assistants can fetch the page            16.7/25  <span class="d">ChatGPT-User (challenged)</span></span><span class="row">  <span class="bad">✗</span> AI search crawlers can fetch the page       10.0/20  <span class="d">OAI-SearchBot (cloaked)</span></span><span class="row">  <span class="ok">✓</span> Content is in the HTML without JavaScript   15.0/15</span><span class="row">  <span class="ok">✓</span> Product structured data is present          10.0/10</span><span class="row"> </span><span class="row h">How to improve</span><span class="row">  1. Allow ChatGPT-User, Claude-User and Perplexity-User in your WAF's verified-bot rules.</span><span class="row">  2. Serve OAI-SearchBot the same product content as browsers. <span class="d">Run with --diff OAI-SearchBot.</span></span></pre>
+<section class="part" id="synopsis">
+  <div class="wrap grid">
+    <h2>Synopsis</h2>
+    <div class="body">
+<pre class="synopsis"><b>acurl</b> [flags] &lt;url&gt;
+<b>acurl</b> -a GPTBot,ClaudeBot --diff GPTBot &lt;url&gt;
+<b>acurl</b> -f json -o report.json --fail-on 'blocked,score&lt;80' &lt;url&gt;
+<b>acurl</b> batch [file | -]
+<b>acurl</b> tap</pre>
     </div>
   </div>
 </section>
-
-<section class="section" id="verdicts">
-  <div class="wrap narrow">
-    <h2>One verdict per agent.</h2>
-    <table class="verdicts">
-      <tr><td><span class="pill allowed">allowed</span></td><td>The agent got the same page as the browser.</td></tr>
-      <tr><td><span class="pill blocked">blocked</span></td><td>An error status (403, 401, 404, 5xx) instead of the page.</td></tr>
-      <tr><td><span class="pill challenged">challenged</span></td><td>A WAF or CAPTCHA challenge page.</td></tr>
-      <tr><td><span class="pill rate-limited">rate-limited</span></td><td>A 429, with the Retry-After delay.</td></tr>
-      <tr><td><span class="pill cloaked">cloaked</span></td><td>The visible text differs substantially from what the browser got.</td></tr>
-      <tr><td><span class="pill robots">robots-disallowed</span></td><td>robots.txt tells this agent to stay out.</td></tr>
-      <tr><td><span class="pill error">error</span></td><td>The request failed: DNS, TLS, timeout or connection reset.</td></tr>
+<section class="part" id="example">
+  <div class="wrap grid">
+    <h2>Example</h2>
+    <div class="body">
+<pre class="term"><span class="row"><span class="p">$</span> acurl shop.example/products/wool-runner</span><span class="row d">Fetching https://shop.example/products/wool-runner with 23 profiles...</span><span class="row"> </span><span class="row h">PROFILE            STATUS  TIME    RESULT             DETAILS</span><span class="row">Chrome (Browser)   200     412ms   <span class="ok">allowed</span>            Wool Runner | Example Store</span><span class="row">ChatGPT-User       403     51ms    <span class="warn">challenged</span>         challenge: Cloudflare</span><span class="row">Claude-User        200     388ms   <span class="ok">allowed</span>            OK</span><span class="row">Perplexity-User    200     402ms   <span class="ok">allowed</span>            product: price 89.00 vs browser 98.00</span><span class="row">OAI-SearchBot      200     97ms    <span class="cl">cloaked</span>            31% similar to browser</span><span class="row">PerplexityBot      200     371ms   <span class="ok">allowed</span>            OK</span><span class="row">GPTBot             200     365ms   <span class="info">robots-disallowed</span>  robots.txt: disallowed</span><span class="row">Google-Extended    -       -       <span class="info">robots-disallowed</span>  robots.txt token (not fetched)</span><span class="row">Googlebot          200     390ms   <span class="ok">allowed</span>            OK</span><span class="row d">...</span><span class="row"> </span><span class="row h">AI readiness <span class="warn">71/100 (C)</span></span><span class="row">  <span class="bad">✗</span> AI assistants can fetch the page            16.7/25  <span class="d">ChatGPT-User (challenged)</span></span><span class="row">  <span class="bad">✗</span> AI search crawlers can fetch the page       10.0/20  <span class="d">OAI-SearchBot (cloaked)</span></span><span class="row">  <span class="ok">✓</span> Content is in the HTML without JavaScript   15.0/15</span><span class="row d">...</span><span class="row"> </span><span class="row"><span class="p">$</span> echo $?</span><span class="row">1</span></pre>
+<p class="note">Exit status <code>1</code>: ChatGPT-User was challenged, which matches the default <code>--fail-on blocked,challenged,error</code>. See <a href="docs/#reading-output">reading the output</a>.</p>
+    </div>
+  </div>
+</section>
+<section class="part" id="result">
+  <div class="wrap grid">
+    <h2>Results</h2>
+    <div class="body">
+<table class="verdicts">
+      <tr><td><span class="pill allowed">allowed</span></td><td>Same page as the browser baseline.</td></tr>
+      <tr><td><span class="pill blocked">blocked</span></td><td>Error status (401, 403, 404, 5xx) instead of the page.</td></tr>
+      <tr><td><span class="pill challenged">challenged</span></td><td>WAF or CAPTCHA challenge page. DETAILS names the vendor.</td></tr>
+      <tr><td><span class="pill rate-limited">rate-limited</span></td><td>HTTP 429, with the Retry-After delay.</td></tr>
+      <tr><td><span class="pill cloaked">cloaked</span></td><td>Visible-text similarity to the browser is below <code>--cloak-threshold</code> (default 0.5).</td></tr>
+      <tr><td><span class="pill robots">robots-disallowed</span></td><td>robots.txt (RFC 9309) disallows this agent.</td></tr>
+      <tr><td><span class="pill error">error</span></td><td>DNS, TLS, timeout or connection reset.</td></tr>
     </table>
+    </div>
   </div>
 </section>
-
-<section class="section alt" id="use">
-  <div class="wrap narrow">
-    <h2>Scripts, CI and AI assistants.</h2>
-    <div class="code">
+<section class="part" id="exit-status">
+  <div class="wrap grid">
+    <h2>Exit status</h2>
+    <div class="body">
+<table class="verdicts codes">
+      <tr><td><code>0</code></td><td>Nothing matched the <code>--fail-on</code> policy.</td></tr>
+      <tr><td><code>1</code></td><td>A result matched the policy, for example an assistant was blocked.</td></tr>
+      <tr><td><code>2</code></td><td>A request failed, or acurl was used incorrectly.</td></tr>
+    </table>
+<p class="note">Combine <code>blocked</code>, <code>challenged</code>, <code>rate-limited</code>, <code>cloaked</code>, <code>robots</code>, <code>error</code> and <code>score&lt;N</code>, or pass <code>none</code>. <a href="docs/#exit-codes">Details</a>.</p>
+    </div>
+  </div>
+</section>
+<section class="part" id="use">
+  <div class="wrap grid">
+    <h2>Integrations</h2>
+    <div class="body">
+<div class="code">
       <div class="tabs" role="tablist" aria-label="Integrations">
-        <button role="tab" id="t-json" aria-controls="o-json" aria-selected="true">JSON</button>
+        <button role="tab" id="t-json" aria-controls="o-json" aria-selected="true">JSON + jq</button>
         <button role="tab" id="t-gha" aria-controls="c-gha" aria-selected="false" tabindex="-1">GitHub Actions</button>
+        <button role="tab" id="t-go-lib" aria-controls="g-lib" aria-selected="false" tabindex="-1">Go</button>
         <button role="tab" id="t-cc" aria-controls="m-cc" aria-selected="false" tabindex="-1">MCP</button>
       </div>
-<pre role="tabpanel" id="o-json" aria-labelledby="t-json"><span class="c">$ acurl -f json shop.example/products/wool-runner</span>
+<pre role="tabpanel" id="o-json" aria-labelledby="t-json"><span class="c">$ acurl -q -f json shop.example | jq -r '.results[] | select(.classification != "allowed") | [.profile, .classification] | @tsv'</span>
+ChatGPT-User      challenged
+OAI-SearchBot     cloaked
+GPTBot            robots-disallowed
+Google-Extended   robots-disallowed
+
+<span class="c">$ acurl -f json shop.example/products/wool-runner</span>
 {
   <span class="k">"url"</span>: <span class="s">"https://shop.example/products/wool-runner"</span>,
   <span class="k">"results"</span>: [
@@ -149,20 +181,10 @@
       <span class="k">"duration_ms"</span>: <span class="n">51</span>,
       <span class="k">"bot_challenge"</span>: <span class="s">"Cloudflare"</span>,
       <span class="k">"classification"</span>: <span class="s">"challenged"</span>
-    },
-    {
-      <span class="k">"profile"</span>: <span class="s">"Perplexity-User"</span>,
-      <span class="k">"status_code"</span>: <span class="n">200</span>,
-      <span class="k">"product"</span>: { <span class="k">"source"</span>: <span class="s">"json-ld"</span>, <span class="k">"price"</span>: <span class="s">"89.00"</span>, <span class="k">"currency"</span>: <span class="s">"USD"</span> },
-      <span class="k">"product_issue"</span>: <span class="s">"price 89.00 vs browser 98.00"</span>,
-      <span class="k">"classification"</span>: <span class="s">"allowed"</span>
     }
   ],
   <span class="k">"summary"</span>: { <span class="k">"total"</span>: <span class="n">22</span>, <span class="k">"allowed"</span>: <span class="n">16</span>, <span class="k">"challenged"</span>: <span class="n">1</span>, <span class="k">"cloaked"</span>: <span class="n">1</span> },
-  <span class="k">"score"</span>: {
-    <span class="k">"value"</span>: <span class="n">71</span>, <span class="k">"grade"</span>: <span class="s">"C"</span>,
-    <span class="k">"checks"</span>: [ { <span class="k">"id"</span>: <span class="s">"assistants-allowed"</span>, <span class="k">"points"</span>: <span class="n">16.7</span>, <span class="k">"weight"</span>: <span class="n">25</span> } ]
-  }
+  <span class="k">"score"</span>: { <span class="k">"value"</span>: <span class="n">71</span>, <span class="k">"grade"</span>: <span class="s">"C"</span> }
 }</pre>
 <pre role="tabpanel" id="c-gha" aria-labelledby="t-gha" hidden><span class="k">name</span>: AI agent access
 <span class="k">on</span>: [pull_request]
@@ -170,7 +192,7 @@
   <span class="k">acurl</span>:
     <span class="k">runs-on</span>: ubuntu-latest
     <span class="k">permissions</span>:
-      <span class="k">security-events</span>: write
+      <span class="k">security-events</span>: write   <span class="c"># SARIF upload to code scanning</span>
     <span class="k">steps</span>:
       - <span class="k">uses</span>: tragent-io/acurl@v1
         <span class="k">with</span>:
@@ -178,33 +200,42 @@
             https://staging.shop.example/
             https://staging.shop.example/products/best-seller
           <span class="k">fail-on</span>: <span class="s">blocked,challenged,score&lt;80</span></pre>
+<pre role="tabpanel" id="g-lib" aria-labelledby="t-go-lib" hidden><span class="k">import</span> <span class="s">"github.com/tragent-io/acurl/pkg/acurl"</span>
+
+c, err := acurl.New(acurl.Options{BlockPrivate: <span class="n">true</span>})
+<span class="k">if</span> err != <span class="n">nil</span> { <span class="k">return</span> err }
+rep, err := c.Check(ctx, <span class="s">"https://shop.example/products/1"</span>)
+<span class="k">if</span> err != <span class="n">nil</span> { <span class="k">return</span> err }
+fmt.Println(rep.Score.Value, rep.Summary.Blocked)</pre>
 <pre role="tabpanel" id="m-cc" aria-labelledby="t-cc" hidden><span class="c"># Claude Code</span>
 claude mcp add acurl -- acurl mcp
 
 <span class="c"># Claude Desktop, Cursor</span>
 { <span class="k">"mcpServers"</span>: { <span class="k">"acurl"</span>: { <span class="k">"command"</span>: <span class="s">"acurl"</span>, <span class="k">"args"</span>: [<span class="s">"mcp"</span>] } } }</pre>
     </div>
+    </div>
   </div>
 </section>
-
-<section class="section" id="commands">
-  <div class="wrap narrow">
+<section class="part" id="commands">
+  <div class="wrap grid">
     <h2>Commands</h2>
-    <table class="cmds">
-      <tr><td><a href="docs/#acurl">acurl &lt;url&gt;</a></td><td>Fetch a URL as every agent, classify each response and score the page.</td></tr>
+    <div class="body">
+<table class="cmds">
+      <tr><td><a href="docs/#acurl">acurl &lt;url&gt;</a></td><td>Request a URL as every profile, classify each response, score the page.</td></tr>
       <tr><td><a href="docs/#acurl-robots">acurl robots &lt;url&gt;</a></td><td>robots.txt verdict per agent, Content Signals, sitemaps and llms.txt.</td></tr>
       <tr><td><a href="docs/#acurl-batch">acurl batch [file]</a></td><td>Check URL lists, CSV files, stdin or whole sitemaps.</td></tr>
-      <tr><td><a href="docs/#acurl-watch">acurl watch &lt;url&gt;...</a></td><td>Re-check on a schedule and alert on changes.</td></tr>
+      <tr><td><a href="docs/#acurl-watch">acurl watch &lt;url&gt;...</a></td><td>Re-check on an interval and report verdict changes.</td></tr>
       <tr><td><a href="docs/#acurl-report">acurl report &lt;file&gt;</a></td><td>Render a saved JSON report as HTML, Markdown, SARIF, JUnit or CSV.</td></tr>
       <tr><td><a href="docs/#acurl-serve">acurl serve</a></td><td>Local web UI and JSON API.</td></tr>
-      <tr><td><a href="docs/#acurl-mcp">acurl mcp</a></td><td>MCP server for AI assistants.</td></tr>
-      <tr><td><a href="docs/#tap">acurl tap</a></td><td>Watch the API traffic of Claude Code, Codex, Gemini CLI or Grok, like tcpdump.</td></tr>
-      <tr><td><a href="docs/#acurl-profiles-list">acurl profiles list | show</a></td><td>Browse the agent profile catalog.</td></tr>
-      <tr><td><a href="docs/#acurl-keygen">acurl keygen</a></td><td>Create an Ed25519 key for Web Bot Auth signing.</td></tr>
-      <tr><td><a href="docs/#acurl-init">acurl init</a></td><td>Write a commented <code>.acurl.yaml</code> config file.</td></tr>
+      <tr><td><a href="docs/#acurl-mcp">acurl mcp</a></td><td>MCP server over stdio.</td></tr>
+      <tr><td><a href="docs/#tap">acurl tap</a></td><td>Show the HTTP requests Claude Code, Codex, Gemini CLI or Grok send to their provider, like tcpdump.</td></tr>
+      <tr><td><a href="docs/#acurl-profiles-list">acurl profiles list | show</a></td><td>List and inspect agent profiles.</td></tr>
+      <tr><td><a href="docs/#acurl-keygen">acurl keygen</a></td><td>Generate an Ed25519 key for Web Bot Auth request signing.</td></tr>
+      <tr><td><a href="docs/#acurl-init">acurl init</a></td><td>Write a commented <code>.acurl.yaml</code>.</td></tr>
       <tr><td><a href="docs/#acurl-completion-bash">acurl completion</a></td><td>Shell completions for bash, zsh, fish and PowerShell.</td></tr>
     </table>
-    <p class="more"><a href="docs/#reference">Full command reference</a></p>
+<p class="note"><a href="docs/#reference">Full command and flag reference</a></p>
+    </div>
   </div>
 </section>
 </main>
@@ -213,7 +244,7 @@ claude mcp add acurl -- acurl mcp
   <div class="wrap">
     <div>
       <a class="brand" href="./"><img src="assets/logo.svg" alt="" width="22" height="22">acurl</a>
-      <p>A free, open-source tool by <a href="https://tragent.io">tragent.io</a>. Apache-2.0 licensed.</p>
+      <p>Apache-2.0. Maintained by <a href="https://tragent.io">tragent.io</a>.</p>
     </div>
     <nav aria-label="Footer">
       <a href="docs/">Docs</a>

@@ -1,6 +1,6 @@
 # acurl
 
-> acurl is a free, open-source command-line tool by tragent.io that fetches a web page as a real Chrome browser and as 21 AI agents and crawlers (ChatGPT-User, Claude-User, Perplexity-User, GPTBot, OAI-SearchBot and others), then reports which were blocked, challenged by a bot manager, cloaked, rate limited or disallowed by robots.txt, and scores how ready the page is for AI agents.
+> acurl is "curl for AI agents": an open-source command-line tool by tragent.io that requests a web page as a real Chrome browser and as 21 AI agents and crawlers (ChatGPT-User, Claude-User, Perplexity-User, GPTBot, OAI-SearchBot and others), then reports which were blocked, challenged by a bot manager, cloaked, rate limited or disallowed by robots.txt, and scores how ready the page is for AI agents.
 
 acurl runs on macOS, Linux and Windows and is licensed under Apache 2.0. Install it with `brew install tragent-io/tap/acurl`, `npx @tragent/acurl`, `go install github.com/tragent-io/acurl/cmd/acurl@latest` or the script at https://acurl.dev/install.sh.
 

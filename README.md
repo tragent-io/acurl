@@ -7,7 +7,7 @@
 
 <h1 align="center">acurl</h1>
 
-<p align="center">See your website the way AI agents see it.<br>
+<p align="center">curl for AI agents.<br>
 <a href="https://acurl.dev">acurl.dev</a> · <a href="https://acurl.dev/docs/">Documentation</a> · <a href="https://acurl.dev/docs/#reference">Command reference</a> · <a href="https://tragent.io">tragent.io</a></p>
 
 <p align="center">
@@ -17,12 +17,13 @@
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-Apache--2.0-1f1534" alt="License"></a>
 </p>
 
-**acurl** fetches a page as a real Chrome browser and as 21 AI agents and crawlers,
-including ChatGPT, Claude, Perplexity and Googlebot. It shows which ones were blocked, challenged, cloaked or shown a different
-price, scores how ready the page is for AI agents, and tells you how to fix what fails.
+**acurl** sends one HTTP request as a real Chrome browser and as 21 AI agent and crawler
+profiles (ChatGPT-User, Claude-User, GPTBot, PerplexityBot, Googlebot and others), then compares
+the responses: status, WAF challenge, robots.txt rule, visible-text similarity and product data.
+Output is a table, JSON, SARIF, JUnit, Markdown, CSV or HTML, and the exit code follows a
+`--fail-on` policy, so it drops into scripts and CI.
 
-It's a free, open-source tool by [tragent.io](https://tragent.io), built for online stores and
-useful on any website.
+Apache-2.0, maintained by [tragent.io](https://tragent.io).
 
 ```console
 $ acurl shop.example/products/wool-runner

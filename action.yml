@@ -1,5 +1,5 @@
 name: acurl AI agent check
-description: 'Check how ChatGPT, Claude, Perplexity and other AI agents are treated by your pages. A free, open-source tool by tragent.io.'
+description: 'Request URLs as Chrome and 21 AI agent and crawler profiles; fail the job on blocked, challenged or cloaked results.'
 author: tragent.io
 branding:
   icon: terminal
