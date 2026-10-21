@@ -7,6 +7,8 @@ All notable changes to acurl are documented here. The format follows
 ## [Unreleased]
 
 ### Added
+- `acurl version` prints the same version line as `acurl --version` instead of treating
+  `version` as a hostname
 - `acurl tap` shows the requests Claude Code, Codex, Gemini CLI and Grok send to their model
   providers and the responses they get, one line per exchange, with `--bodies` and JSON lines
   output (`-w`). API keys, tokens and cookies are redacted. See [docs/tap.md](docs/tap.md)
