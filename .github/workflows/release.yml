@@ -37,6 +37,13 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           HOMEBREW_TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
           SCOOP_BUCKET_TOKEN: ${{ secrets.SCOOP_BUCKET_TOKEN }}
+      - name: Move v1 tag
+        if: ${{ startsWith(github.ref_name, 'v1.') && !contains(github.ref_name, '-') }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag -f -a v1 -m "acurl v1 (${GITHUB_REF_NAME})" "${GITHUB_REF_NAME}^{}"
+          git push -f origin v1
 
   npm:
     needs: release
