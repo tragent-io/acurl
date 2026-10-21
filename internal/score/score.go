@@ -299,7 +299,18 @@ func indexable(rep *types.ComparisonResult) (float64, string, bool) {
 	if d := blocking(b.Directives); d != "" {
 		return 0, d + " in meta robots or X-Robots-Tag: search and AI search will drop the page", true
 	}
-	total, hit := countAI(rep, func(r types.FetchResult) bool { return blocking(r.Directives) != "" })
+	var total int
+	var hit []string
+	for _, r := range rep.Results {
+		if !aiAgent(r.Category) || r.RobotsOnly ||
+			(r.Classification != classifier.Allowed && r.Classification != classifier.Cloaked) {
+			continue
+		}
+		total++
+		if blocking(r.Directives) != "" {
+			hit = append(hit, r.Profile)
+		}
+	}
 	if total == 0 {
 		return 1, "no noindex directives", true
 	}

@@ -16,6 +16,10 @@ All notable changes to acurl are documented here. The format follows
   `acurl tap status`, `acurl tap stop` and `acurl tap serve` manage it
 - acurl.dev documents `acurl tap`, and CONTRIBUTING.md explains how to add a CLI to it
 
+### Fixed
+- The `indexable` score ignores `noindex` directives from challenged and blocked
+  agent responses, where the directive belongs to an intermediary error page
+
 ## [1.1.1] - 2026-10-19
 
 ### Fixed

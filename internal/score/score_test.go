@@ -154,6 +154,36 @@ func TestNoindexLosesPoints(t *testing.T) {
 	}
 }
 
+func TestIndexableIgnoresNoindexFromUnavailableAgents(t *testing.T) {
+	for _, classification := range []string{"challenged", "blocked"} {
+		t.Run(classification, func(t *testing.T) {
+			agent := res("OAI-SearchBot", types.CategoryAISearch, classification)
+			agent.Directives = []string{"noindex", "nofollow"}
+			rep := &types.ComparisonResult{Results: []types.FetchResult{baselineResult(), agent}}
+
+			if c := findCheck(t, Compute(rep), "indexable"); !c.Passed || c.Detail != "no noindex directives" {
+				t.Errorf("indexable = %+v", c)
+			}
+		})
+	}
+}
+
+func TestIndexableCountsOnlyVisibleAgentRows(t *testing.T) {
+	allowed := res("OAI-SearchBot", types.CategoryAISearch, "allowed")
+	allowed.Directives = []string{"noindex"}
+	rep := &types.ComparisonResult{Results: []types.FetchResult{
+		baselineResult(),
+		allowed,
+		res("Claude-SearchBot", types.CategoryAISearch, "cloaked"),
+		res("PerplexityBot", types.CategoryAISearch, "challenged"),
+		res("Google-Extended", types.CategoryAITraining, "blocked"),
+	}}
+
+	if c := findCheck(t, Compute(rep), "indexable"); c.Points != 7.5 || c.Detail != "noindex for: OAI-SearchBot" {
+		t.Errorf("indexable = %+v", c)
+	}
+}
+
 func TestUnscorableReasons(t *testing.T) {
 	base := func(r types.FetchResult) *types.ComparisonResult {
 		r.Profile, r.Browser, r.Category = "Chrome", true, types.CategoryBrowser
