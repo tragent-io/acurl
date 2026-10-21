@@ -10,7 +10,65 @@ permissions:
   id-token: write    # keyless cosign signing
 
 jobs:
+  # Tag pushes do not re-run CI. Gate publishing on the CI workflow that
+  # already ran (or is still running) for the tagged commit.
+  ensure-ci:
+    name: Ensure CI passed
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+    steps:
+      - name: Wait for CI on tagged commit
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          sha="${{ github.sha }}"
+          echo "Requiring a successful CI workflow run on ${sha} before releasing"
+
+          # CI includes a multi-OS matrix plus headless Chrome; allow up to 45m.
+          deadline=$((SECONDS + 2700))
+          while (( SECONDS < deadline )); do
+            json="$(gh run list --workflow=ci.yml --commit="${sha}" --limit=20 \
+              --json databaseId,status,conclusion,url,event)"
+
+            if [[ "$(jq 'length' <<<"${json}")" -eq 0 ]]; then
+              echo "No CI run found yet for ${sha}; retrying..."
+              sleep 20
+              continue
+            fi
+
+            # Newest first from gh. Prefer watching an in-progress run.
+            pending="$(jq -r '[.[] | select(.status != "completed")][0] // empty | "\(.databaseId)\t\(.url)"' <<<"${json}")"
+            if [[ -n "${pending}" ]]; then
+              id="${pending%%$'\t'*}"
+              url="${pending#*$'\t'}"
+              echo "CI run ${id} still in progress: ${url}"
+              if gh run watch "${id}" --exit-status; then
+                echo "CI passed on ${sha}"
+                exit 0
+              fi
+              echo "::error::CI failed on ${sha}. Refusing to publish this release. See ${url}"
+              exit 1
+            fi
+
+            newest="$(jq -r '.[0] | "\(.databaseId)\t\(.conclusion)\t\(.url)"' <<<"${json}")"
+            id="$(cut -f1 <<<"${newest}")"
+            conclusion="$(cut -f2 <<<"${newest}")"
+            url="$(cut -f3 <<<"${newest}")"
+            if [[ "${conclusion}" == "success" ]]; then
+              echo "CI run ${id} succeeded on ${sha}"
+              exit 0
+            fi
+            echo "::error::CI on ${sha} concluded '${conclusion}' (run ${id}). Refusing to publish this release. See ${url}"
+            exit 1
+          done
+
+          echo "::error::Timed out after 45m waiting for CI on ${sha}. Refusing to publish this release."
+          exit 1
+
   release:
+    needs: ensure-ci
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
