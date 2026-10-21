@@ -36,16 +36,6 @@ document.querySelectorAll("[data-copy]").forEach((b) => {
   });
 });
 
-// Play the terminal demo once, when it scrolls into view.
-const term = document.querySelector(".term");
-if (term) {
-  term.querySelectorAll(".row").forEach((r, i) => r.style.setProperty("--i", i));
-  const io = new IntersectionObserver((entries) => {
-    if (entries.some((e) => e.isIntersecting)) { term.classList.add("play"); io.disconnect(); }
-  }, { threshold: 0.2 });
-  io.observe(term);
-}
-
 // Docs: highlight the sidebar link for the section in view.
 const links = [...document.querySelectorAll(".side a[href^='#']")];
 if (links.length) {

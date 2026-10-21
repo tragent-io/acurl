@@ -61,7 +61,7 @@ nfpms:
     vendor: tragent
     homepage: https://acurl.dev
     maintainer: tragent <hello@tragent.io>
-    description: See your website the way AI agents see it.
+    description: "curl for AI agents: request a URL as Chrome and 21 AI agent and crawler profiles and compare the responses."
     license: Apache-2.0
     formats: [deb, rpm, apk]
     contents:
@@ -83,7 +83,7 @@ homebrew_casks:
     skip_upload: '{{ if isEnvSet "HOMEBREW_TAP_TOKEN" }}false{{ else }}true{{ end }}'
     directory: Casks
     homepage: https://acurl.dev
-    description: See your website the way AI agents see it
+    description: "curl for AI agents: request a URL as Chrome and 21 AI agent and crawler profiles and compare the responses"
     binaries: [acurl]
     manpages: [man/acurl.1]
     completions:
@@ -109,7 +109,7 @@ scoops:
       token: "{{ .Env.SCOOP_BUCKET_TOKEN }}"
     skip_upload: '{{ if isEnvSet "SCOOP_BUCKET_TOKEN" }}false{{ else }}true{{ end }}'
     homepage: https://acurl.dev
-    description: See your website the way AI agents see it
+    description: "curl for AI agents: request a URL as Chrome and 21 AI agent and crawler profiles and compare the responses"
     license: Apache-2.0
 
 dockers_v2:
@@ -125,7 +125,7 @@ dockers_v2:
       - linux/arm64
     labels:
       org.opencontainers.image.title: acurl
-      org.opencontainers.image.description: See your website the way AI agents see it
+      org.opencontainers.image.description: "curl for AI agents: request a URL as Chrome and 21 AI agent and crawler profiles and compare the responses"
       org.opencontainers.image.url: https://acurl.dev
       org.opencontainers.image.source: https://github.com/tragent-io/acurl
       org.opencontainers.image.version: "{{ .Version }}"

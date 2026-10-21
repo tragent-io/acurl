@@ -14,7 +14,7 @@
 <meta property="og:image" content="https://acurl.dev/assets/og.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="acurl: see your site the way AI agents see it">
+<meta property="og:image:alt" content="acurl: curl for AI agents">
 <meta property="og:site_name" content="acurl">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://acurl.dev/assets/og.png">
@@ -110,7 +110,7 @@
 
 <main id="main" class="content">
 <h1>acurl documentation</h1>
-<p class="lead">acurl fetches a URL once per agent profile, compares every response with a real Chrome visit and tells you which AI agents and crawlers can read the page, and what to fix when they can't.</p>
+<p class="lead">acurl requests a URL once per agent profile and compares each response with a real Chrome request: status, WAF challenge, robots.txt rule, visible-text similarity and product data. Results come out as a table or as JSON, SARIF, JUnit, Markdown, CSV or HTML, and the exit code follows <a href="#exit-codes"><code>--fail-on</code></a>.</p>
 
 <h2 id="install">Installation</h2>
 <p>acurl is a single static binary for macOS, Linux and Windows (amd64 and arm64).</p>

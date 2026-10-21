@@ -91,4 +91,4 @@ case ":$PATH:" in
   *":$DIR:"*) ;;
   *) say "Add $DIR to your PATH:  export PATH=\"$DIR:\$PATH\"" ;;
 esac
-say "Get started:  acurl https://yourstore.com   ·   docs: https://acurl.dev/docs/"
+say "Get started:  acurl https://example.com   ·   docs: https://acurl.dev/docs/"
