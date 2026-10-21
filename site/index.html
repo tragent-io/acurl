@@ -74,11 +74,12 @@
 </header>
 
 <main id="main">
-<section class="hero">
-  <div class="wrap">
-    <h1>acurl <span class="soft">curl for AI agents</span></h1>
-    <p class="sub">Send one HTTP request as Chrome and as 21 AI agent and crawler profiles, then compare the responses: status, WAF challenge, robots.txt rule, visible-text similarity and product data. Output as a table, JSON, SARIF or JUnit, with a non-zero exit code when a <code>--fail-on</code> rule matches.</p>
-
+<section class="part hero" aria-labelledby="name">
+  <div class="wrap grid">
+    <h1 id="name">acurl</h1>
+    <div class="body">
+      <p class="tagline">curl for AI agents.</p>
+      <p class="sub">Send one HTTP request as Chrome and as 21 AI agent and crawler profiles, then compare the responses: status, WAF challenge, robots.txt rule, visible-text similarity and product data. Output as a table, JSON, SARIF or JUnit, with a non-zero exit code when a <code>--fail-on</code> rule matches.</p>
     <div class="install" data-copy-scope>
       <div class="tabs" role="tablist" aria-label="Install acurl">
         <button role="tab" id="t-brew" aria-controls="p-brew" aria-selected="true">Homebrew</button>
@@ -97,36 +98,37 @@
         <button class="copy" type="button" data-copy="[role=tabpanel]">Copy</button>
       </div>
     </div>
-    <p class="meta">Single static binary · macOS, Linux, Windows (amd64, arm64) · Apache-2.0 · <a href="docs/">Docs</a> · <a href="docs/#reference">Reference</a> · <a href="https://github.com/tragent-io/acurl">Source</a></p>
+      <p class="meta">A single static binary for macOS, Linux and Windows on amd64 and arm64. Apache&#8209;2.0.</p>
+      <p class="links"><a href="docs/#quick-start">Read the docs</a><a href="docs/#reference">Command reference</a><a href="https://github.com/tragent-io/acurl">Source on GitHub</a></p>
+    </div>
   </div>
 </section>
-
-<section class="section" id="synopsis">
-  <div class="wrap narrow">
+<section class="part" id="synopsis">
+  <div class="wrap grid">
     <h2>Synopsis</h2>
+    <div class="body">
 <pre class="synopsis"><b>acurl</b> [flags] &lt;url&gt;
 <b>acurl</b> -a GPTBot,ClaudeBot --diff GPTBot &lt;url&gt;
 <b>acurl</b> -f json -o report.json --fail-on 'blocked,score&lt;80' &lt;url&gt;
 <b>acurl</b> batch [file | -]
 <b>acurl</b> tap</pre>
-  </div>
-</section>
-
-<section class="demo" aria-label="Example run">
-  <div class="wrap narrow">
-    <h2>Example</h2>
-    <div class="window">
-      <div class="bar" aria-hidden="true"><i></i><i></i><i></i><span>zsh</span></div>
-<pre class="term"><span class="row"><span class="p">$</span> acurl shop.example/products/wool-runner</span><span class="row d">Fetching https://shop.example/products/wool-runner with 23 profiles...</span><span class="row"> </span><span class="row h">PROFILE            STATUS  TIME    RESULT             DETAILS</span><span class="row">Chrome (Browser)   200     412ms   <span class="ok">allowed</span>            Wool Runner | Example Store</span><span class="row">ChatGPT-User       403     51ms    <span class="warn">challenged</span>         challenge: Cloudflare</span><span class="row">Claude-User        200     388ms   <span class="ok">allowed</span>            OK</span><span class="row">Perplexity-User    200     402ms   <span class="ok">allowed</span>            product: price 89.00 vs browser 98.00</span><span class="row">OAI-SearchBot      200     97ms    <span class="cl">cloaked</span>            31% similar to browser</span><span class="row">PerplexityBot      200     371ms   <span class="ok">allowed</span>            OK</span><span class="row">GPTBot             200     365ms   <span class="info">robots-disallowed</span>  robots.txt: disallowed</span><span class="row">Google-Extended    -       -       <span class="info">robots-disallowed</span>  robots.txt token (not fetched)</span><span class="row">Googlebot          200     390ms   <span class="ok">allowed</span>            OK</span><span class="row d">...</span><span class="row"> </span><span class="row h">AI readiness <span class="warn">71/100 (C)</span></span><span class="row">  <span class="bad">✗</span> AI assistants can fetch the page            16.7/25  <span class="d">ChatGPT-User (challenged)</span></span><span class="row">  <span class="bad">✗</span> AI search crawlers can fetch the page       10.0/20  <span class="d">OAI-SearchBot (cloaked)</span></span><span class="row">  <span class="ok">✓</span> Content is in the HTML without JavaScript   15.0/15</span><span class="row d">...</span><span class="row"> </span><span class="row"><span class="p">$</span> echo $?</span><span class="row">1</span></pre>
     </div>
-    <p class="more">Exit status <code>1</code>: an agent was challenged, which matches the default <code>--fail-on blocked,challenged,error</code>. See <a href="docs/#reading-output">reading the output</a>.</p>
   </div>
 </section>
-
-<section class="section" id="result">
-  <div class="wrap narrow">
-    <h2>RESULT values</h2>
-    <table class="verdicts">
+<section class="part" id="example">
+  <div class="wrap grid">
+    <h2>Example</h2>
+    <div class="body">
+<pre class="term"><span class="row"><span class="p">$</span> acurl shop.example/products/wool-runner</span><span class="row d">Fetching https://shop.example/products/wool-runner with 23 profiles...</span><span class="row"> </span><span class="row h">PROFILE            STATUS  TIME    RESULT             DETAILS</span><span class="row">Chrome (Browser)   200     412ms   <span class="ok">allowed</span>            Wool Runner | Example Store</span><span class="row">ChatGPT-User       403     51ms    <span class="warn">challenged</span>         challenge: Cloudflare</span><span class="row">Claude-User        200     388ms   <span class="ok">allowed</span>            OK</span><span class="row">Perplexity-User    200     402ms   <span class="ok">allowed</span>            product: price 89.00 vs browser 98.00</span><span class="row">OAI-SearchBot      200     97ms    <span class="cl">cloaked</span>            31% similar to browser</span><span class="row">PerplexityBot      200     371ms   <span class="ok">allowed</span>            OK</span><span class="row">GPTBot             200     365ms   <span class="info">robots-disallowed</span>  robots.txt: disallowed</span><span class="row">Google-Extended    -       -       <span class="info">robots-disallowed</span>  robots.txt token (not fetched)</span><span class="row">Googlebot          200     390ms   <span class="ok">allowed</span>            OK</span><span class="row d">...</span><span class="row"> </span><span class="row h">AI readiness <span class="warn">71/100 (C)</span></span><span class="row">  <span class="bad">✗</span> AI assistants can fetch the page            16.7/25  <span class="d">ChatGPT-User (challenged)</span></span><span class="row">  <span class="bad">✗</span> AI search crawlers can fetch the page       10.0/20  <span class="d">OAI-SearchBot (cloaked)</span></span><span class="row">  <span class="ok">✓</span> Content is in the HTML without JavaScript   15.0/15</span><span class="row d">...</span><span class="row"> </span><span class="row"><span class="p">$</span> echo $?</span><span class="row">1</span></pre>
+<p class="note">Exit status <code>1</code>: ChatGPT-User was challenged, which matches the default <code>--fail-on blocked,challenged,error</code>. See <a href="docs/#reading-output">reading the output</a>.</p>
+    </div>
+  </div>
+</section>
+<section class="part" id="result">
+  <div class="wrap grid">
+    <h2>Results</h2>
+    <div class="body">
+<table class="verdicts">
       <tr><td><span class="pill allowed">allowed</span></td><td>Same page as the browser baseline.</td></tr>
       <tr><td><span class="pill blocked">blocked</span></td><td>Error status (401, 403, 404, 5xx) instead of the page.</td></tr>
       <tr><td><span class="pill challenged">challenged</span></td><td>WAF or CAPTCHA challenge page. DETAILS names the vendor.</td></tr>
@@ -135,25 +137,27 @@
       <tr><td><span class="pill robots">robots-disallowed</span></td><td>robots.txt (RFC 9309) disallows this agent.</td></tr>
       <tr><td><span class="pill error">error</span></td><td>DNS, TLS, timeout or connection reset.</td></tr>
     </table>
+    </div>
   </div>
 </section>
-
-<section class="section" id="exit-status">
-  <div class="wrap narrow">
+<section class="part" id="exit-status">
+  <div class="wrap grid">
     <h2>Exit status</h2>
-    <table class="verdicts">
+    <div class="body">
+<table class="verdicts codes">
       <tr><td><code>0</code></td><td>Nothing matched the <code>--fail-on</code> policy.</td></tr>
       <tr><td><code>1</code></td><td>A result matched the policy, for example an assistant was blocked.</td></tr>
       <tr><td><code>2</code></td><td>A request failed, or acurl was used incorrectly.</td></tr>
     </table>
-    <p class="more">Combine <code>blocked</code>, <code>challenged</code>, <code>rate-limited</code>, <code>cloaked</code>, <code>robots</code>, <code>error</code> and <code>score&lt;N</code>, or pass <code>none</code>. <a href="docs/#exit-codes">Details</a>.</p>
+<p class="note">Combine <code>blocked</code>, <code>challenged</code>, <code>rate-limited</code>, <code>cloaked</code>, <code>robots</code>, <code>error</code> and <code>score&lt;N</code>, or pass <code>none</code>. <a href="docs/#exit-codes">Details</a>.</p>
+    </div>
   </div>
 </section>
-
-<section class="section alt" id="use">
-  <div class="wrap narrow">
+<section class="part" id="use">
+  <div class="wrap grid">
     <h2>Integrations</h2>
-    <div class="code">
+    <div class="body">
+<div class="code">
       <div class="tabs" role="tablist" aria-label="Integrations">
         <button role="tab" id="t-json" aria-controls="o-json" aria-selected="true">JSON + jq</button>
         <button role="tab" id="t-gha" aria-controls="c-gha" aria-selected="false" tabindex="-1">GitHub Actions</button>
@@ -209,13 +213,14 @@ claude mcp add acurl -- acurl mcp
 <span class="c"># Claude Desktop, Cursor</span>
 { <span class="k">"mcpServers"</span>: { <span class="k">"acurl"</span>: { <span class="k">"command"</span>: <span class="s">"acurl"</span>, <span class="k">"args"</span>: [<span class="s">"mcp"</span>] } } }</pre>
     </div>
+    </div>
   </div>
 </section>
-
-<section class="section" id="commands">
-  <div class="wrap narrow">
+<section class="part" id="commands">
+  <div class="wrap grid">
     <h2>Commands</h2>
-    <table class="cmds">
+    <div class="body">
+<table class="cmds">
       <tr><td><a href="docs/#acurl">acurl &lt;url&gt;</a></td><td>Request a URL as every profile, classify each response, score the page.</td></tr>
       <tr><td><a href="docs/#acurl-robots">acurl robots &lt;url&gt;</a></td><td>robots.txt verdict per agent, Content Signals, sitemaps and llms.txt.</td></tr>
       <tr><td><a href="docs/#acurl-batch">acurl batch [file]</a></td><td>Check URL lists, CSV files, stdin or whole sitemaps.</td></tr>
@@ -229,7 +234,8 @@ claude mcp add acurl -- acurl mcp
       <tr><td><a href="docs/#acurl-init">acurl init</a></td><td>Write a commented <code>.acurl.yaml</code>.</td></tr>
       <tr><td><a href="docs/#acurl-completion-bash">acurl completion</a></td><td>Shell completions for bash, zsh, fish and PowerShell.</td></tr>
     </table>
-    <p class="more"><a href="docs/#reference">Full command and flag reference</a></p>
+<p class="note"><a href="docs/#reference">Full command and flag reference</a></p>
+    </div>
   </div>
 </section>
 </main>
