@@ -6,6 +6,8 @@ All notable changes to acurl are documented here. The format follows
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-10-22
+
 ### Added
 - `acurl tap` shows the requests Claude Code, Codex, Gemini CLI and Grok send to their model
   providers and the responses they get, one line per exchange, with `--bodies` and JSON lines
@@ -165,7 +167,8 @@ First public preview.
 - CI-friendly exit codes: 0 allowed, 1 blocked or challenged, 2 errors
 - Custom profiles via `--profiles file.yaml`, extra headers via `-H`
 
-[Unreleased]: https://github.com/tragent-io/acurl/compare/v1.1.1...HEAD
+[Unreleased]: https://github.com/tragent-io/acurl/compare/v1.2.0...HEAD
+[1.2.0]: https://github.com/tragent-io/acurl/compare/v1.1.1...v1.2.0
 [1.1.1]: https://github.com/tragent-io/acurl/compare/v1.1.0...v1.1.1
 [1.1.0]: https://github.com/tragent-io/acurl/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/tragent-io/acurl/compare/v0.4.0...v1.0.0
