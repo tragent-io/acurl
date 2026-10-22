@@ -19,6 +19,9 @@ All notable changes to acurl are documented here. The format follows
 ### Fixed
 - The `indexable` score ignores `noindex` directives from challenged and blocked
   agent responses, where the directive belongs to an intermediary error page
+- Tag pushes no longer publish a release, Homebrew bottle, npm package or GHCR
+  image when CI failed on the tagged commit; the release workflow waits for the
+  CI run on that SHA and fails with a clear error if it did not succeed
 
 ## [1.1.1] - 2026-10-19
 
