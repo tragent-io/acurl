@@ -2,7 +2,7 @@
 # Install acurl, a free, open-source tool by tragent.io (https://acurl.dev).
 #
 #   curl -fsSL https://acurl.dev/install.sh | sh
-#   curl -fsSL https://acurl.dev/install.sh | sh -s -- --version v1.0.0 --dir ~/.local/bin
+#   curl -fsSL https://acurl.dev/install.sh | sh -s -- --version v1.1.0 --dir ~/.local/bin
 #
 # Downloads the release archive for this OS and CPU from GitHub, verifies its
 # SHA-256 checksum and installs the binary.
