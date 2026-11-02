@@ -103,10 +103,6 @@ func TestToolsCallInvalidParamsAndArguments(t *testing.T) {
 }
 
 func TestToolArgumentErrorPaths(t *testing.T) {
-	srv, err := New(acurl.Options{BlockPrivate: true}, "test")
-	if err != nil {
-		t.Fatal(err)
-	}
 	ctx := context.Background()
 	invalid := json.RawMessage("{")
 
