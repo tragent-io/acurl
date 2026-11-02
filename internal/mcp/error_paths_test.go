@@ -30,24 +30,20 @@ func TestServeProtocolErrors(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	scanner := strings.Split(strings.TrimSpace(output.String()), "\n")
-	if len(scanner) != 4 {
-		t.Fatalf("got %d responses, want 4: %s", len(scanner), output.String())
+	lines := strings.Split(strings.TrimSpace(output.String()), "\n")
+	if len(lines) != 5 {
+		t.Fatalf("got %d responses, want 5: %s", len(lines), output.String())
 	}
 
-	want := []struct {
-		id   any
-		code float64
-	}{
-		{id: float64(1)},
-		{id: nil, code: -32700},
-		{id: float64(2), code: -32600},
-		{id: float64(3), code: -32600},
-	}
-	for i, line := range scanner {
+	wantIDs := []any{float64(1), nil, float64(2), float64(3), float64(4)}
+	wantCodes := []float64{0, -32700, -32600, -32600, -32601}
+	for i, line := range lines {
 		var got map[string]any
 		if err := json.Unmarshal([]byte(line), &got); err != nil {
 			t.Fatalf("response %d is invalid JSON: %v", i, err)
+		}
+		if got["id"] != wantIDs[i] {
+			t.Errorf("response %d id = %v, want %v", i, got["id"], wantIDs[i])
 		}
 		if i == 0 {
 			if got["result"] == nil {
@@ -59,11 +55,8 @@ func TestServeProtocolErrors(t *testing.T) {
 		if !ok {
 			t.Fatalf("response %d has no error object: %v", i, got)
 		}
-		if e["code"] != want[i].code {
-			t.Errorf("response %d error code = %v, want %v", i, e["code"], want[i].code)
-		}
-		if got["id"] != want[i].id {
-			t.Errorf("response %d id = %v, want %v", i, got["id"], want[i].id)
+		if e["code"] != wantCodes[i] {
+			t.Errorf("response %d error code = %v, want %v", i, e["code"], wantCodes[i])
 		}
 	}
 }
@@ -104,7 +97,7 @@ func TestToolsCallInvalidParamsAndArguments(t *testing.T) {
 		t.Fatalf("invalid tool arguments should be returned as a tool result: %+v", res)
 	}
 	result, ok := res.Result.(*ToolResult)
-	if !ok || !result.IsError || !strings.Contains(result.Content[0].Text, "invalid arguments") {
+	if !ok || !result.IsError || len(result.Content) == 0 || !strings.Contains(result.Content[0].Text, "invalid arguments") {
 		t.Fatalf("invalid arguments result = %#v, want an isError tool result", res.Result)
 	}
 }
@@ -117,11 +110,12 @@ func TestToolArgumentErrorPaths(t *testing.T) {
 	ctx := context.Background()
 	invalid := json.RawMessage("{")
 
+	toolSet := &tools{base: acurl.Options{BlockPrivate: true}}
 	for name, handler := range map[string]func(context.Context, json.RawMessage) (*ToolResult, error){
-		"check":   (&tools{base: acurl.Options{BlockPrivate: true}}).check,
-		"score":   (&tools{base: acurl.Options{BlockPrivate: true}}).score,
-		"robots":  (&tools{base: acurl.Options{BlockPrivate: true}}).robots,
-		"list":    (&tools{base: acurl.Options{BlockPrivate: true}}).list,
+		"check":  toolSet.check,
+		"score":  toolSet.score,
+		"robots": toolSet.robots,
+		"list":   toolSet.list,
 	} {
 		t.Run(name, func(t *testing.T) {
 			_, err := handler(ctx, invalid)
@@ -131,7 +125,6 @@ func TestToolArgumentErrorPaths(t *testing.T) {
 		})
 	}
 
-	toolSet := &tools{base: acurl.Options{BlockPrivate: true}}
 	if _, err := toolSet.check(ctx, json.RawMessage(`{}`)); err == nil || err.Error() != "url is required" {
 		t.Errorf("missing URL error = %v, want url is required", err)
 	}
