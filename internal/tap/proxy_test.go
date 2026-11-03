@@ -41,8 +41,11 @@ func newHarness(t *testing.T, upstream http.Handler, opts Options) *harness {
 	if err != nil {
 		t.Fatal(err)
 	}
-	h.proxy = httptest.NewServer(p)
+	h.proxy = httptest.NewUnstartedServer(p)
+	h.proxy.Config.ConnContext = p.ConnContext
+	h.proxy.Start()
 	t.Cleanup(h.proxy.Close)
+	t.Cleanup(p.Close)
 	return h
 }
 

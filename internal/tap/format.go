@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"net/url"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -17,7 +18,14 @@ func WriteLine(w io.Writer, x *Exchange) error {
 		path = u.RequestURI()
 	}
 	var b strings.Builder
-	fmt.Fprintf(&b, "%s #%d %s %s %s", x.Start.Format("15:04:05"), x.ID, x.Route, x.Method, path)
+	fmt.Fprintf(&b, "%s #%d", x.Start.Format("15:04:05"), x.ID)
+	if x.Process != "" && x.PID > 0 {
+		// QuoteToASCII escapes terminal controls, including Unicode format
+		// characters, without allowing a process name to add another line.
+		name := strconv.QuoteToASCII(x.Process)
+		fmt.Fprintf(&b, " %s:%d", name[1:len(name)-1], x.PID)
+	}
+	fmt.Fprintf(&b, " %s %s %s", x.Route, x.Method, path)
 	if x.Model != "" {
 		b.WriteString(" " + x.Model)
 	}

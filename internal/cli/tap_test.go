@@ -141,6 +141,22 @@ func TestTapRefusesForeignListener(t *testing.T) {
 	}
 }
 
+func TestTapRejectsInvalidProcessBeforeStartingProxy(t *testing.T) {
+	var out, errb bytes.Buffer
+	a := &app{stdout: &out, stderr: &errb, getenv: os.Getenv}
+	a.startTapProcess = func(_ []string, _ string) error {
+		t.Fatal("started proxy before validating --process")
+		return nil
+	}
+	root := newRootCmd(a)
+	root.SetArgs([]string{"tap", "--listen", freeAddr(t), "--process", "node:0"})
+	root.SetOut(&out)
+	root.SetErr(&errb)
+	if err := root.ExecuteContext(context.Background()); err == nil || !strings.Contains(err.Error(), "invalid --process") {
+		t.Fatalf("invalid selector error = %v", err)
+	}
+}
+
 func waitUntil(t *testing.T, ok func() bool) {
 	t.Helper()
 	for deadline := time.Now().Add(10 * time.Second); !ok(); {

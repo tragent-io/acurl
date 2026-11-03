@@ -164,5 +164,6 @@ func (p *Proxy) serveEvents(w http.ResponseWriter, r *http.Request) {
 
 // Close ends every events stream. Call it before shutting the server down.
 func (p *Proxy) Close() {
+	p.processes.close()
 	p.hub.close()
 }

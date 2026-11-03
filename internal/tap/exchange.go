@@ -23,6 +23,8 @@ type Exchange struct {
 	Start      time.Time     `json:"start"`
 	Duration   time.Duration `json:"duration_ns"`
 	Route      string        `json:"route"`
+	Process    string        `json:"process,omitempty"`
+	PID        int           `json:"pid,omitempty"`
 	Method     string        `json:"method"`
 	URL        string        `json:"url"`
 	Model      string        `json:"model,omitempty"`

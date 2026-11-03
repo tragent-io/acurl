@@ -328,8 +328,10 @@ acurl tap
 # terminal 2
 eval "$(acurl tap env)"      # once, or in ~/.zshrc / ~/.bashrc
 claude</code></pre>
-<pre><code>21:21:49 #1 anthropic HEAD /api/hello 200 565ms 0B &gt; 0B
-21:21:50 #2 anthropic POST /v1/messages?beta=true claude-opus-5-5 200 1.639s 70.0KB &gt; 1.5KB stream</code></pre>
+<pre><code>21:21:49 #1 claude:3142 anthropic HEAD /api/hello 200 565ms 0B &gt; 0B
+21:21:50 #2 claude:3142 anthropic POST /v1/messages?beta=true claude-opus-5-5 200 1.639s 70.0KB &gt; 1.5KB stream</code></pre>
+<p>When available, each line includes the local socket owner's process name and PID. A Node.js CLI may appear as <code>node</code>. OS permissions and process information can limit lookup; unavailable metadata leaves the label out. Asynchronous lookup can briefly delay publication. Only names and PIDs are recorded, never command lines or executable paths.</p>
+<p>Linux needs visibility into the owner's <code>/proc</code> entries; macOS needs <code>/usr/sbin/lsof</code>; Windows uses native TCP table and process APIs. Restricted permissions or a process exiting before lookup finishes can leave metadata unavailable.</p>
 <p>Each CLI is pointed at a local proxy through the base URL variable it already supports, so no CA certificate is installed. The wrappers from <code>acurl tap env</code> (bash, zsh, fish, PowerShell) only use the proxy while it is running. The first <code>acurl tap</code> starts the proxy in the background; quitting the viewer leaves it running, so a tapped CLI keeps working.</p>
 <table class="stack">
   <tr><th>CLI</th><th>Variables</th><th>Notes</th></tr>
@@ -339,10 +341,13 @@ claude</code></pre>
   <tr><td><code>grok</code></td><td><code>GROK_CLI_CHAT_PROXY_BASE_URL</code></td><td>Grok Build CLI with grok.com login</td></tr>
 </table>
 <pre><code>acurl tap --bodies              # request and response bodies under each line
+acurl tap --process claude      # exact name, ignoring case
+acurl tap --process node:3142   # one process; repeat --process to match either
 acurl tap -w session.jsonl      # every exchange as a JSON line
 acurl tap --redact "Acme Corp"  # remove extra strings
 acurl tap status                # is the proxy running
 acurl tap stop                  # stop it (quit tapped CLIs first)</code></pre>
+<p><code>--process</code> filters only this viewer's lines, bodies and stdout JSON (<code>-w -</code>); a session file still captures every exchange. Exchanges with unknown metadata appear without a filter and are hidden with one. JSON adds optional <code>process</code> and <code>pid</code> fields. <code>--redact</code> also applies to process names, and filters match the redacted name.</p>
 <p>API keys, tokens, cookies and <code>key=</code> parameters are replaced with <code>[redacted]</code>, and each removal is recorded. Prompts and model output are not redacted, so treat session files like shell history. The proxy only listens on loopback and refuses browser requests. Streams pass through as they arrive; WebSockets pass through with only the handshake recorded. See the <a href="https://github.com/tragent-io/acurl/blob/main/docs/tap.md">full guide</a>.</p>
 
 <h2 id="config">Configuration</h2>
@@ -764,6 +769,7 @@ prints or writes. Add other strings to remove with --redact.</p>
       <tr><td><code>--keep-credentials</code></td><td></td><td>do not redact API keys, tokens and cookies</td></tr>
       <tr><td><code>--listen <i>string</i></code></td><td><code>127.0.0.1:8899</code></td><td>loopback address the proxy listens on</td></tr>
       <tr><td><code>--max-body <i>int</i></code></td><td><code>1048576</code></td><td>bytes of each body to keep; the rest is counted, not stored</td></tr>
+      <tr><td><code>--process <i>string, repeatable</i></code></td><td></td><td>show an exact process name or name:pid (case-insensitive; repeatable)</td></tr>
       <tr><td><code>--redact <i>string, repeatable</i></code></td><td></td><td>extra string to replace with [redacted] (repeatable)</td></tr>
       <tr><td><code>-w, --write <i>string</i></code></td><td></td><td>append every exchange as JSON lines to this file (- for stdout)</td></tr>
     </tbody></table></div>
