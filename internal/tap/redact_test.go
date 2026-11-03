@@ -58,3 +58,14 @@ func TestRedactorKeepCredentials(t *testing.T) {
 		t.Errorf("exchange changed with credentials kept: %+v", x)
 	}
 }
+
+func TestRedactProcess(t *testing.T) {
+	x := &Exchange{Process: "team-acme-cli", PID: 42}
+	Redact(x, []string{"team-acme"})
+	if x.Process != Redacted+"-cli" || x.PID != 42 {
+		t.Errorf("process metadata = %q:%d", x.Process, x.PID)
+	}
+	if len(x.Redactions) != 1 || x.Redactions[0] != (Redaction{Where: "process", Reason: "user secret"}) {
+		t.Errorf("redactions = %+v", x.Redactions)
+	}
+}

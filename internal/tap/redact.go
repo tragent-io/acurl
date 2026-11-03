@@ -25,7 +25,7 @@ var credentialHeaders = []string{
 // credentialParams carry secrets in query strings (Gemini accepts ?key=).
 var credentialParams = []string{"key", "api_key", "access_token"}
 
-// Redact replaces each of secrets in x's headers, URL and bodies, and
+// Redact replaces each of secrets in x's headers, URL, bodies and process name, and
 // records where it did.
 func Redact(x *Exchange, secrets []string) {
 	redactor{secrets: secrets}.apply(x)
@@ -38,6 +38,7 @@ type redactor struct {
 }
 
 func (r redactor) apply(x *Exchange) {
+	x.Process = r.text(x, "process", x.Process)
 	r.header(x, "request", x.ReqHeader)
 	r.header(x, "response", x.RespHeader)
 	x.URL = r.query(x, x.URL)

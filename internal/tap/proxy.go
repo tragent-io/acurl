@@ -26,8 +26,9 @@ type Options struct {
 	KeepCredentials bool
 	// Secrets are extra strings removed from headers, URLs and bodies.
 	Secrets []string
-	// OnExchange receives every finished exchange, as do viewers connected
-	// to EventsPath. It is called from many goroutines at once.
+	// OnExchange receives every finished exchange after publication, as do
+	// viewers connected to EventsPath. It is called from many goroutines at
+	// once; the exchange must be treated as read-only.
 	OnExchange func(*Exchange)
 	// OnStop is called when a client asks the proxy to stop through
 	// StopPath. Without it, StopPath is refused.
@@ -41,11 +42,12 @@ type Options struct {
 
 // Proxy forwards CLI requests to their providers and records each exchange.
 type Proxy struct {
-	opts   Options
-	rp     *httputil.ReverseProxy
-	red    redactor
-	hub    hub
-	nextID atomic.Int64
+	opts      Options
+	rp        *httputil.ReverseProxy
+	red       redactor
+	hub       hub
+	nextID    atomic.Int64
+	processes *processTracker
 }
 
 type ctxKey struct{}
@@ -57,6 +59,7 @@ type pending struct {
 	req      *capture
 	resp     *capture
 	finished sync.Once
+	process  *connectionProcess
 }
 
 // New returns a Proxy.
@@ -79,6 +82,8 @@ func New(opts Options) (*Proxy, error) {
 		}
 	}
 	p := &Proxy{opts: opts, red: redactor{credentials: !opts.KeepCredentials, secrets: opts.Secrets}}
+	p.processes = newProcessTracker(p.emit)
+	p.processes.notify = opts.OnExchange
 	p.rp = &httputil.ReverseProxy{
 		Rewrite:        p.rewrite,
 		Transport:      opts.Transport,
@@ -116,6 +121,10 @@ func (p *Proxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		route: route,
 		req:   &capture{max: p.opts.MaxBody},
 		resp:  &capture{max: p.opts.MaxBody},
+	}
+	pd.process, _ = r.Context().Value(processContextKey{}).(*connectionProcess)
+	if pd.process != nil {
+		pd.process.start()
 	}
 	p.rp.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), ctxKey{}, pd)))
 }
@@ -199,12 +208,24 @@ func (p *Proxy) finish(pd *pending, err error) {
 		if u != nil {
 			x.Model = modelOf(u.Path, x.ReqBody)
 		}
-		p.red.apply(&x)
-		if p.opts.OnExchange != nil {
-			p.opts.OnExchange(&x)
+		if pd.process != nil {
+			pd.process.publish(&x)
+		} else {
+			p.publish(&x)
 		}
-		p.hub.publish(&x)
 	})
+}
+
+func (p *Proxy) publish(x *Exchange) {
+	p.emit(x)
+	if p.opts.OnExchange != nil {
+		p.opts.OnExchange(x)
+	}
+}
+
+func (p *Proxy) emit(x *Exchange) {
+	p.red.apply(x)
+	p.hub.publish(x)
 }
 
 type teeReadCloser struct {

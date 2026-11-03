@@ -49,10 +49,11 @@ func (f *tapProxyFlags) validate() error {
 
 func newTapCmd(a *app) *cobra.Command {
 	var (
-		pf      tapProxyFlags
-		write   string
-		bodies  bool
-		secrets []string
+		pf        tapProxyFlags
+		write     string
+		bodies    bool
+		secrets   []string
+		processes []string
 	)
 	cmd := &cobra.Command{
 		Use:   "tap",
@@ -87,11 +88,15 @@ prints or writes. Add other strings to remove with --redact.`,
 			if err := pf.validate(); err != nil {
 				return err
 			}
+			filter, err := parseTapProcessFilter(processes)
+			if err != nil {
+				return err
+			}
 			info, err := a.ensureTapProxy(cmd, pf)
 			if err != nil {
 				return err
 			}
-			sink, closeSink, err := a.tapSink(write, bodies)
+			sink, closeSink, err := a.tapSink(write, bodies, filter)
 			if err != nil {
 				return err
 			}
@@ -105,6 +110,7 @@ prints or writes. Add other strings to remove with --redact.`,
 	cmd.Flags().StringVarP(&write, "write", "w", "", "append every exchange as JSON lines to this file (- for stdout)")
 	cmd.Flags().BoolVar(&bodies, "bodies", false, "print request and response bodies under each line")
 	cmd.Flags().StringArrayVar(&secrets, "redact", nil, "extra string to replace with [redacted] (repeatable)")
+	cmd.Flags().StringArrayVar(&processes, "process", nil, "show an exact process name or name:pid (case-insensitive; repeatable)")
 	cmd.AddCommand(newTapEnvCmd(a), newTapServeCmd(a), newTapStopCmd(a), newTapStatusCmd(a))
 	return cmd
 }
@@ -424,7 +430,7 @@ func (a *app) defaultShell() string {
 }
 
 // tapSink returns the callback that prints or saves each exchange.
-func (a *app) tapSink(write string, bodies bool) (func(*tap.Exchange), func(), error) {
+func (a *app) tapSink(write string, bodies bool, filter tapProcessFilter) (func(*tap.Exchange), func(), error) {
 	var (
 		mu    sync.Mutex
 		lines = a.stdout
@@ -445,12 +451,13 @@ func (a *app) tapSink(write string, bodies bool) (func(*tap.Exchange), func(), e
 	sink := func(x *tap.Exchange) {
 		mu.Lock()
 		defer mu.Unlock()
-		if jsonl != nil {
+		matches := filter.matches(x)
+		if jsonl != nil && (file != nil || matches) {
 			if err := jsonl.Encode(x); err != nil {
 				fmt.Fprintln(a.stderr, "acurl tap: write:", err)
 			}
 		}
-		if lines != nil {
+		if lines != nil && matches {
 			_ = tap.WriteLine(lines, x)
 			if bodies {
 				_ = tap.WriteBodies(lines, x)
@@ -482,6 +489,9 @@ func loopbackAddr(addr string) error {
 // set, runs first to end connections that would otherwise never finish.
 func serveUntilDone(ctx context.Context, ln net.Listener, h http.Handler, beforeShutdown func()) error {
 	hs := &http.Server{Handler: h, ReadHeaderTimeout: 10 * time.Second}
+	if p, ok := h.(*tap.Proxy); ok {
+		hs.ConnContext = p.ConnContext
+	}
 	go func() {
 		<-ctx.Done()
 		if beforeShutdown != nil {
