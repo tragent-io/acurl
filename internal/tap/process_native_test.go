@@ -153,8 +153,7 @@ func BenchmarkProcessLookup(b *testing.B) {
 
 func BenchmarkProcessCache(b *testing.B) {
 	tracker := newProcessTracker(func(*Exchange) {})
-	s := &connectionProcess{tracker: tracker, ready: true, identity: processIdentity{name: "claude", pid: 42}}
-	s.once.Do(func() {})
+	s := &connectionProcess{tracker: tracker, started: true, ready: true, identity: processIdentity{name: "claude", pid: 42}}
 	var x Exchange
 	b.ReportAllocs()
 	for b.Loop() {
@@ -168,7 +167,7 @@ func BenchmarkAttributionProxy(b *testing.B) {
 		for _, cold := range []bool{false, true} {
 			name := mode + "/keepalive"
 			if cold {
-				name = mode + "/new-connection"
+				name = mode + "/short-lived"
 			}
 			b.Run(name, func(b *testing.B) { benchmarkAttributionProxy(b, mode, cold, false) })
 		}
@@ -185,12 +184,19 @@ func benchmarkAttributionProxy(b *testing.B, mode string, cold, parallel bool) {
 	up := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) { _, _ = io.WriteString(w, "ok") }))
 	defer up.Close()
 	var published, attributed, lag atomic.Int64
-	p, err := New(Options{Routes: []Route{{Name: "test", Prefix: "/test", Upstream: up.URL}}, OnExchange: func(x *Exchange) {
-		published.Add(1)
+	upstreamTransport := http.DefaultTransport.(*http.Transport).Clone()
+	if parallel {
+		upstreamTransport.MaxIdleConnsPerHost = 32
+		upstreamTransport.MaxIdleConns = 32
+	}
+	defer upstreamTransport.CloseIdleConnections()
+	p, err := New(Options{Routes: []Route{{Name: "test", Prefix: "/test", Upstream: up.URL}}, Transport: upstreamTransport, OnExchange: func(x *Exchange) {
 		if x.PID != 0 {
 			attributed.Add(1)
 		}
 		lag.Add(int64(time.Since(x.Start) - x.Duration))
+		// Observing this count also observes all of this callback's metrics.
+		published.Add(1)
 	}})
 	if err != nil {
 		b.Fatal(err)
@@ -233,16 +239,10 @@ func benchmarkAttributionProxy(b *testing.B, mode string, cold, parallel bool) {
 	// Warm the connection and attribution before measuring the cache path.
 	if !cold {
 		request()
-		deadline := time.Now().Add(5 * time.Second)
-		for published.Load() == 0 {
-			if time.Now().After(deadline) {
-				b.Fatal("warmup exchange not published")
-			}
-			time.Sleep(time.Millisecond)
-		}
-		published.Store(0)
+		awaitBenchmarkPublications(b, &published, 1)
 		attributed.Store(0)
 		lag.Store(0)
+		published.Store(0)
 	}
 	samples := make([]int64, b.N)
 	b.ReportAllocs()
@@ -264,11 +264,107 @@ func benchmarkAttributionProxy(b *testing.B, mode string, cold, parallel bool) {
 		}
 	}
 	b.StopTimer()
+	// Shutdown would cancel unfinished lookups and bias attribution downward.
+	awaitBenchmarkPublications(b, &published, int64(b.N))
 	p.Close()
 	slices.Sort(samples)
 	b.ReportMetric(float64(samples[(len(samples)-1)*95/100]), "p95-ns/op")
-	if n := published.Load(); n > 0 {
-		b.ReportMetric(float64(lag.Load())/float64(n), "event-delay-ns/op")
-		b.ReportMetric(100*float64(attributed.Load())/float64(n), "attributed-%")
+	b.ReportMetric(float64(lag.Load())/float64(b.N), "event-delay-ns/op")
+	b.ReportMetric(100*float64(attributed.Load())/float64(b.N), "attributed-%")
+}
+
+func awaitBenchmarkPublications(b *testing.B, published *atomic.Int64, want int64) {
+	b.Helper()
+	deadline := time.Now().Add(5 * time.Second)
+	for published.Load() < want {
+		if time.Now().After(deadline) {
+			b.Fatalf("only %d/%d exchanges published before timeout", published.Load(), want)
+		}
+		time.Sleep(time.Millisecond)
 	}
+	if got := published.Load(); got != want {
+		b.Fatalf("published %d exchanges, want exactly %d", got, want)
+	}
+}
+
+// BenchmarkAttributionFreshHeld keeps each fresh connection alive until its
+// exchange is published, separating response latency from discovery latency.
+func BenchmarkAttributionFreshHeld(b *testing.B) {
+	for _, mode := range []string{"disabled", "native"} {
+		b.Run(mode, func(b *testing.B) { benchmarkAttributionFreshHeld(b, mode) })
+	}
+}
+
+func benchmarkAttributionFreshHeld(b *testing.B, mode string) {
+	up := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) { _, _ = io.WriteString(w, "ok") }))
+	defer up.Close()
+	type publication struct {
+		x   *Exchange
+		lag int64
+	}
+	got := make(chan publication, 1)
+	p, err := New(Options{Routes: []Route{{Name: "test", Prefix: "/test", Upstream: up.URL}}, OnExchange: func(x *Exchange) {
+		got <- publication{x: x, lag: int64(time.Since(x.Start) - x.Duration)}
+	}})
+	if err != nil {
+		b.Fatal(err)
+	}
+	if mode == "disabled" {
+		p.processes.lookup = nil
+	}
+	srv := httptest.NewUnstartedServer(p)
+	srv.Config.ConnContext = p.ConnContext
+	srv.Start()
+	defer srv.Close()
+	defer p.Close()
+	samples := make([]int64, b.N)
+	eventSamples := make([]int64, b.N)
+	attributed := 0
+	b.ReportAllocs()
+	b.ResetTimer()
+	b.StopTimer()
+	for i := range b.N {
+		// A separate transport guarantees a new connection without asking the
+		// server to close it before the asynchronous socket lookup finishes.
+		transport := http.DefaultTransport.(*http.Transport).Clone()
+		client := &http.Client{Transport: transport, Timeout: 5 * time.Second}
+		b.StartTimer()
+		start := time.Now()
+		resp, requestErr := client.Get(srv.URL + "/test/x")
+		if requestErr == nil {
+			_, requestErr = io.Copy(io.Discard, resp.Body)
+		}
+		samples[i] = int64(time.Since(start))
+		b.StopTimer()
+		if resp != nil {
+			resp.Body.Close()
+		}
+		if requestErr != nil {
+			transport.CloseIdleConnections()
+			b.Fatal(requestErr)
+		}
+		timer := time.NewTimer(5 * time.Second)
+		var event publication
+		select {
+		case event = <-got:
+			timer.Stop()
+		case <-timer.C:
+			transport.CloseIdleConnections()
+			b.Fatal("fresh held connection exchange not published before timeout")
+		}
+		transport.CloseIdleConnections()
+		eventSamples[i] = event.lag
+		if event.x.PID == os.Getpid() && event.x.Process != "" {
+			attributed++
+		} else if mode == "native" {
+			b.Fatalf("fresh held connection attribution = %q:%d, want nonempty name and PID %d", event.x.Process, event.x.PID, os.Getpid())
+		}
+	}
+	slices.Sort(samples)
+	slices.Sort(eventSamples)
+	b.ReportMetric(float64(samples[(len(samples)-1)*95/100]), "p95-ns/op")
+	b.ReportMetric(float64(eventSamples[(len(eventSamples)-1)*50/100]), "event-delay-p50-ns/op")
+	b.ReportMetric(float64(eventSamples[(len(eventSamples)-1)*95/100]), "event-delay-p95-ns/op")
+	b.ReportMetric(100*float64(attributed)/float64(b.N), "attributed-%")
+	b.ReportMetric(0, "publication-timeout-%")
 }

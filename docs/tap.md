@@ -35,6 +35,8 @@ process name and PID, never command lines or executable paths.
 Results are cached for each connection, including unsuccessful lookups. Captures wait at
 most 500 ms for metadata; forwarding never waits. If discovery is too busy or too many
 captures are waiting, exchanges are published without a process label.
+When discovery is busy, a later request on the same connection retries admission;
+an actual lookup result, including failure, remains cached for that connection.
 
 Linux lookup requires visibility into the socket owner's `/proc` entries. macOS uses
 `/usr/sbin/lsof`, which must be available. Windows uses native TCP table and process APIs.
@@ -150,11 +152,25 @@ name another host, so web pages cannot use it to reach your provider accounts.
 From a development checkout, run:
 
 ```bash
-go test ./internal/tap -run '^$' -bench 'Process|Attribution' -benchmem -count=5
+go test ./internal/tap -run '^$' -bench 'Process|Attribution' -benchmem -benchtime=200x -count=5
 ```
 
-The benchmarks separate native lookup and cached access from end-to-end proxy requests.
-Proxy cases compare disabled, native and deliberately slow discovery on new connections,
-keep-alive connections and concurrent clients. They report client latency (`p95-ns/op`),
-publication delay (`event-delay-ns/op`) and the percentage of attributed exchanges, so a
-fast response is not mistaken for a successful lookup. Run them on each supported OS.
+The fixed iteration count bounds ephemeral-port use in connection-churn cases. The
+benchmarks separate native lookup and cached access from end-to-end proxy requests.
+`AttributionProxy` compares disabled, native and deliberately slow discovery on keep-alive
+connections and short-lived connections that close immediately after the response. The
+short-lived case stresses connection churn: its socket may disappear before lookup completes.
+`AttributionConcurrent` uses persistent connection pools on both sides of the proxy. These cases
+report client latency (`p95-ns/op`), mean publication delay (`event-delay-ns/op`) and the
+percentage of attributed exchanges. All measured exchanges must publish before metrics are
+collected; shutdown does not cancel pending measurements.
+
+`AttributionFreshHeld` compares disabled and native discovery on serial fresh connections,
+keeping each socket open until its exchange is published. Only the HTTP request through
+response EOF contributes to `ns/op` and client `p95-ns/op`; connection setup is included, while
+waiting for publication and connection teardown are excluded. Publication delay after the
+exchange ends is reported separately as `event-delay-p50-ns/op` and `event-delay-p95-ns/op`.
+The native case requires the correct PID and a nonempty process name for every request;
+missing attribution or a publication timeout fails the benchmark. Successful runs report
+`publication-timeout-%` as zero. This distinguishes a fast response from a successful lookup.
+Run the benchmarks on each supported OS.
