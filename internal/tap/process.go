@@ -60,8 +60,8 @@ func (p *Proxy) ConnContext(ctx context.Context, conn net.Conn) context.Context 
 type connectionProcess struct {
 	tracker       *processTracker
 	local, remote netip.AddrPort
-	once          sync.Once
 	mu            sync.Mutex
+	started       bool
 	ready         bool
 	identity      processIdentity
 	waiting       []*Exchange
@@ -70,57 +70,65 @@ type connectionProcess struct {
 }
 
 func (s *connectionProcess) start() {
-	s.once.Do(func() {
-		s.done = make(chan struct{})
-		t := s.tracker
-		t.mu.Lock()
-		if t.closed || t.lookup == nil {
-			t.mu.Unlock()
-			s.complete(processIdentity{})
-			return
-		}
-		select {
-		case t.slots <- struct{}{}:
-		default:
-			t.mu.Unlock()
-			s.complete(processIdentity{})
-			return
-		}
-		ctx, cancel := context.WithTimeout(context.Background(), t.timeout)
-		s.cancel = cancel
-		t.active[s] = struct{}{}
+	s.mu.Lock()
+	if s.started || s.ready {
+		s.mu.Unlock()
+		return
+	}
+	t := s.tracker
+	t.mu.Lock()
+	if t.closed || t.lookup == nil {
+		s.ready = true
 		t.mu.Unlock()
+		s.mu.Unlock()
+		return
+	}
+	select {
+	case t.slots <- struct{}{}:
+	default:
+		// Busy is not a failed lookup. Publish this request without metadata,
+		// but let a later request on the connection retry admission.
+		t.mu.Unlock()
+		s.mu.Unlock()
+		return
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), t.timeout)
+	s.done = make(chan struct{})
+	s.started = true
+	s.cancel = cancel
+	t.active[s] = struct{}{}
+	t.mu.Unlock()
+	s.mu.Unlock()
 
-		// The deadline watcher also finalizes captures when a native system call
-		// cannot be interrupted. Its slot stays occupied until that call returns,
-		// so even stalled native calls cannot create unlimited goroutines.
-		go func() {
-			<-ctx.Done()
-			s.complete(processIdentity{})
-		}()
-		go func() {
-			identity, err := t.lookup(ctx, s.local, s.remote)
-			if err != nil || ctx.Err() != nil || identity.name == "" || identity.pid <= 0 {
-				identity = processIdentity{}
-			}
-			s.complete(identity)
-			cancel()
-			// A deadline watcher may own finalization. Keep its capacity until
-			// it also finishes callbacks, even if the native lookup has returned.
-			<-s.done
-			<-t.slots
-			t.mu.Lock()
-			delete(t.active, s)
-			t.mu.Unlock()
-		}()
-	})
+	// The deadline watcher also finalizes captures when a native system call
+	// cannot be interrupted. Its slot stays occupied until that call returns,
+	// so even stalled native calls cannot create unlimited goroutines.
+	go func() {
+		<-ctx.Done()
+		s.complete(processIdentity{})
+	}()
+	go func() {
+		identity, err := t.lookup(ctx, s.local, s.remote)
+		if err != nil || ctx.Err() != nil || identity.name == "" || identity.pid <= 0 {
+			identity = processIdentity{}
+		}
+		s.complete(identity)
+		cancel()
+		// A deadline watcher may own finalization. Keep its capacity until
+		// it also finishes callbacks, even if the native lookup has returned.
+		<-s.done
+		<-t.slots
+		t.mu.Lock()
+		delete(t.active, s)
+		t.mu.Unlock()
+	}()
 }
 
 // publish never waits for discovery. A completed exchange can wait for metadata
 // off the forwarding path; excess captures are published without attribution.
 func (s *connectionProcess) publish(x *Exchange) {
 	s.mu.Lock()
-	if !s.ready && len(s.waiting) < processPendingLimit {
+	if s.started && !s.ready && len(s.waiting) < processPendingLimit {
 		s.tracker.pending.Add(1)
 		s.waiting = append(s.waiting, x)
 		s.mu.Unlock()

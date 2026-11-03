@@ -95,6 +95,44 @@ func TestProcessDeadlineIgnoresLateResult(t *testing.T) {
 	}
 }
 
+func TestProcessBusyConnectionRetriesAdmission(t *testing.T) {
+	release := make(chan struct{})
+	var calls atomic.Int32
+	tracker, got := testProcessTracker(t, func(context.Context, netip.AddrPort, netip.AddrPort) (processIdentity, error) {
+		calls.Add(1)
+		<-release
+		return processIdentity{name: "client", pid: 42}, nil
+	})
+	tracker.timeout = time.Hour
+	for range processLookupLimit {
+		s := &connectionProcess{tracker: tracker}
+		s.start()
+	}
+	busy := &connectionProcess{tracker: tracker}
+	busy.start()
+	busy.publish(&Exchange{ID: 1})
+	if x := nextProcessExchange(t, got); x.Process != "" || x.PID != 0 {
+		t.Fatal("busy lookup must publish without metadata")
+	}
+	close(release)
+	waitFor(t, func() bool { return len(tracker.slots) == 0 })
+	// Retry the same connection, including simultaneous requests. Only one
+	// discovery is admitted, and its successful result is then cached.
+	var wg sync.WaitGroup
+	for range 4 {
+		wg.Go(func() { busy.start(); busy.publish(&Exchange{ID: 2}) })
+	}
+	wg.Wait()
+	for range 4 {
+		if x := nextProcessExchange(t, got); x.Process != "client" || x.PID != 42 {
+			t.Fatalf("later request was not attributed: %+v", x)
+		}
+	}
+	if calls.Load() != processLookupLimit+1 {
+		t.Fatalf("lookups = %d, want %d", calls.Load(), processLookupLimit+1)
+	}
+}
+
 func TestProcessCapacityAndClosePreserveExchanges(t *testing.T) {
 	tracker, got := testProcessTracker(t, func(ctx context.Context, _, _ netip.AddrPort) (processIdentity, error) {
 		<-ctx.Done()
