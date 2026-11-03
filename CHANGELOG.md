@@ -6,6 +6,11 @@ All notable changes to acurl are documented here. The format follows
 
 ## [Unreleased]
 
+### Added
+- `acurl tap` labels exchanges with the local socket owner's process name and PID when
+  available. Repeatable `--process name[:pid]` filters each viewer's output while session
+  files continue capturing every exchange. Process names also respect `--redact`.
+
 ## [1.2.0] - 2026-10-22
 
 ### Added

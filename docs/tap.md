@@ -16,14 +16,44 @@ claude
 ```
 
 ```
-20:44:42 #1 anthropic HEAD /api/hello 200 449ms 0B > 0B
-20:44:43 #2 anthropic POST /v1/messages?beta=true claude-opus-5-5 200 2.328s 70.1KB > 1.5KB stream
+20:44:42 #1 claude:3142 anthropic HEAD /api/hello 200 449ms 0B > 0B
+20:44:43 #2 claude:3142 anthropic POST /v1/messages?beta=true claude-opus-5-5 200 2.328s 70.1KB > 1.5KB stream
 ```
 
-Each line is printed when the exchange ends: time it started, number, provider, method and
-path, model, status, duration, request and response size. `stream` marks server-sent events,
+Each line summarizes a completed exchange: time it started, number, process name and PID
+(when available), provider, method and path, model, status, duration, request and response size.
+`stream` marks server-sent events,
 `canceled` an exchange the CLI hung up on, and `websocket` a WebSocket the CLI opened. Long
 streams finish after shorter requests that started later, so numbers can arrive out of order.
+
+The process label identifies the local socket owner, so a CLI implemented in Node.js may
+appear as `node`, rather than its CLI command. Lookup depends on OS permissions and available
+process information; an unavailable lookup leaves the label out. Metadata lookup is
+asynchronous and can briefly delay publication after an exchange ends. acurl records only the
+process name and PID, never command lines or executable paths.
+
+Results are cached for each connection, including unsuccessful lookups. Captures wait at
+most 500 ms for metadata; forwarding never waits. If discovery is too busy or too many
+captures are waiting, exchanges are published without a process label.
+
+Linux lookup requires visibility into the socket owner's `/proc` entries. macOS uses
+`/usr/sbin/lsof`, which must be available. Windows uses native TCP table and process APIs.
+Restricted permissions or a process that exits before lookup finishes can leave metadata
+unavailable on any platform.
+
+## Filter by process
+
+```bash
+acurl tap --process claude                 # all PIDs with this exact name
+acurl tap --process node:3142              # one process
+acurl tap --process claude --process codex # either name
+```
+
+Names match exactly, ignoring case; a PID must be a positive decimal integer. Filters apply
+only to this viewer, so other viewers can watch different processes. Without a filter,
+exchanges with unavailable metadata remain visible. With a filter, they are excluded.
+Filters affect summary lines, `--bodies`, and JSON on stdout (`-w -`). A session file
+(`-w session.jsonl`) still captures every exchange, including those hidden from the viewer.
 
 ## How it works
 
@@ -80,7 +110,8 @@ acurl tap -w session.jsonl      # append every exchange as a JSON line
 acurl tap -w - | jq .model      # JSON lines on stdout
 ```
 
-Each JSON line holds the URL, model, status, timing, headers and both bodies. Bodies sent
+Each JSON line holds the URL, model, status, timing, headers and both bodies, plus `process`
+and `pid` when known. Older captures simply lack these optional fields. Bodies sent
 with `Content-Encoding` (Grok compresses requests with zstd) are decoded. acurl keeps the first
 1 MB of each body (`--max-body`) and marks it `truncated`; the CLI always gets the whole body.
 
@@ -94,6 +125,9 @@ customer name that appears in prompts:
 ```bash
 acurl tap --redact "Acme Corp" -w session.jsonl
 ```
+
+`--redact` also removes matching strings from process names. Process filters match the name
+after this redaction.
 
 Prompts, code and model output are not redacted, so treat session files like your shell
 history. They are created readable only by you.
@@ -110,3 +144,17 @@ name another host, so web pages cannot use it to reach your provider accounts.
 - WebSocket connections pass through, but only the handshake is recorded, not the frames.
 - A viewer that cannot keep up (more than 1,024 exchanges behind) skips exchanges and
   says how many it missed. The proxy never slows a CLI down for a viewer.
+
+## Benchmark process attribution
+
+From a development checkout, run:
+
+```bash
+go test ./internal/tap -run '^$' -bench 'Process|Attribution' -benchmem -count=5
+```
+
+The benchmarks separate native lookup and cached access from end-to-end proxy requests.
+Proxy cases compare disabled, native and deliberately slow discovery on new connections,
+keep-alive connections and concurrent clients. They report client latency (`p95-ns/op`),
+publication delay (`event-delay-ns/op`) and the percentage of attributed exchanges, so a
+fast response is not mistaken for a successful lookup. Run them on each supported OS.
