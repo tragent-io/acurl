@@ -211,6 +211,12 @@ func benchmarkAttributionProxy(b *testing.B, mode string, cold, parallel bool) {
 	defer p.Close()
 	transport := http.DefaultTransport.(*http.Transport).Clone()
 	transport.DisableKeepAlives = cold
+	if parallel {
+		// Keep concurrent clients' connections alive. The default idle pool of
+		// two otherwise turns this case into a second connection-churn test.
+		transport.MaxIdleConnsPerHost = 32
+		transport.MaxIdleConns = 32
+	}
 	defer transport.CloseIdleConnections()
 	client := &http.Client{Transport: transport, Timeout: 5 * time.Second}
 	request := func() {
