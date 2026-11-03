@@ -80,13 +80,13 @@ func TestLookupLinuxProcessOwner(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	if err := os.WriteFile(filepath.Join(root, "net/tcp"), []byte("0: 0100007F:C350 0100007F:1F90 01 0 0 0 0 0 123\n"), 0600); err != nil {
+	if err := os.WriteFile(filepath.Join(root, "net", "tcp"), []byte("0: 0100007F:C350 0100007F:1F90 01 0 0 0 0 0 123\n"), 0600); err != nil {
 		t.Fatal(err)
 	}
-	if err := os.Symlink("socket:[123]", filepath.Join(root, "42/fd/5")); err != nil {
+	if err := os.Symlink("socket:[123]", filepath.Join(root, "42", "fd", "5")); err != nil {
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(filepath.Join(root, "42/comm"), []byte("client\n"), 0600); err != nil {
+	if err := os.WriteFile(filepath.Join(root, "42", "comm"), []byte("client\n"), 0600); err != nil {
 		t.Fatal(err)
 	}
 	local := netip.MustParseAddrPort("127.0.0.1:8080")
@@ -95,17 +95,17 @@ func TestLookupLinuxProcessOwner(t *testing.T) {
 	if err != nil || got.pid != 42 || got.name != "client" {
 		t.Fatalf("owner = %+v, %v", got, err)
 	}
-	if err := os.Symlink("/usr/bin/actual (deleted)", filepath.Join(root, "42/exe")); err != nil {
+	if err := os.Symlink("/usr/bin/actual (deleted)", filepath.Join(root, "42", "exe")); err != nil {
 		t.Fatal(err)
 	}
 	got, err = lookupLinuxProcess(context.Background(), root, local, remote)
 	if err != nil || got.name != "actual" {
 		t.Fatalf("executable owner = %+v, %v", got, err)
 	}
-	if err := os.MkdirAll(filepath.Join(root, "44/fd"), 0700); err != nil {
+	if err := os.MkdirAll(filepath.Join(root, "44", "fd"), 0700); err != nil {
 		t.Fatal(err)
 	}
-	if err := os.Symlink("socket:[123]", filepath.Join(root, "44/fd/5")); err != nil {
+	if err := os.Symlink("socket:[123]", filepath.Join(root, "44", "fd", "5")); err != nil {
 		t.Fatal(err)
 	}
 	if _, err := lookupLinuxProcess(context.Background(), root, local, remote); err == nil {
