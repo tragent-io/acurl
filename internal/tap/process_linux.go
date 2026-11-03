@@ -21,7 +21,11 @@ func lookupProcess(ctx context.Context, local, remote netip.AddrPort) (processId
 
 func lookupLinuxProcess(ctx context.Context, root string, local, remote netip.AddrPort) (processIdentity, error) {
 	inodes := make(map[string]bool)
-	for _, table := range []string{"tcp", "tcp6"} {
+	tables := []string{"tcp", "tcp6"}
+	if local.Addr().Unmap().Is6() || remote.Addr().Unmap().Is6() {
+		tables = []string{"tcp6"}
+	}
+	for _, table := range tables {
 		if err := ctx.Err(); err != nil {
 			return processIdentity{}, err
 		}
@@ -36,6 +40,11 @@ func lookupLinuxProcess(ctx context.Context, root string, local, remote netip.Ad
 		}
 		for inode := range found {
 			inodes[inode] = true
+		}
+		// An established client tuple is unique across these tables. IPv4
+		// sockets can also appear as mapped IPv6, so try tcp6 only if needed.
+		if len(inodes) != 0 {
+			break
 		}
 	}
 	if len(inodes) == 0 {

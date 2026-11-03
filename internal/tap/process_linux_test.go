@@ -112,3 +112,38 @@ func TestLookupLinuxProcessOwner(t *testing.T) {
 		t.Fatal("multiple owners should fail")
 	}
 }
+
+func TestLookupLinuxProcessIPv6Tables(t *testing.T) {
+	for _, tc := range []struct {
+		name, client, server, address string
+	}{
+		{"ipv6", "[::1]:50000", "[::1]:8080", "00000000000000000000000001000000"},
+		{"mapped IPv4 fallback", "127.0.0.1:50000", "127.0.0.1:8080", "0000000000000000FFFF00000100007F"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			root := t.TempDir()
+			for _, dir := range []string{"net", filepath.Join("42", "fd")} {
+				if err := os.MkdirAll(filepath.Join(root, dir), 0700); err != nil {
+					t.Fatal(err)
+				}
+			}
+			if err := os.WriteFile(filepath.Join(root, "net", "tcp"), nil, 0600); err != nil {
+				t.Fatal(err)
+			}
+			row := "0: " + tc.address + ":C350 " + tc.address + ":1F90 01 0 0 0 0 0 123\n"
+			if err := os.WriteFile(filepath.Join(root, "net", "tcp6"), []byte(row), 0600); err != nil {
+				t.Fatal(err)
+			}
+			if err := os.Symlink("socket:[123]", filepath.Join(root, "42", "fd", "5")); err != nil {
+				t.Fatal(err)
+			}
+			if err := os.WriteFile(filepath.Join(root, "42", "comm"), []byte("client\n"), 0600); err != nil {
+				t.Fatal(err)
+			}
+			identity, err := lookupLinuxProcess(context.Background(), root, netip.MustParseAddrPort(tc.server), netip.MustParseAddrPort(tc.client))
+			if err != nil || identity.pid != 42 || identity.name != "client" {
+				t.Fatalf("IPv6 table owner = %+v, %v", identity, err)
+			}
+		})
+	}
+}
