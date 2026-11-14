@@ -6,6 +6,10 @@ All notable changes to acurl are documented here. The format follows
 
 ## [Unreleased]
 
+### Added
+- `acurl version` prints the same line as `--version`. It used to check a host named `version`;
+  to check one, give it a scheme: `acurl https://version`
+
 ## [1.2.0] - 2026-10-22
 
 ### Added
